@@ -242,7 +242,10 @@ export async function GET(request) {
 
     if (movieMatch) {
       const tmdbId = movieMatch[1];
-      const movie = await getTmdbMovie(tmdbId);
+      const [movie, subtitleUrl] = await Promise.all([
+        getTmdbMovie(tmdbId),
+        getSpanishSubtitleUrl({ tmdbId }),
+      ]);
       const localMatch = await findLocalMatch('movie', movie);
       if (localMatch) {
         const localData = await fetchLocalPlayer(localMatch.numericId);
@@ -251,7 +254,6 @@ export async function GET(request) {
         }
       }
 
-      const subtitleUrl = await getSpanishSubtitleUrl({ tmdbId });
       const embeds = buildEmbedProviders({
         type: 'movie',
         tmdbId,
@@ -284,7 +286,10 @@ export async function GET(request) {
 
     // Episodio de serie TMDB
     const [, tvId, season, episodeNum] = episodeMatch;
-    const show = await getTmdbTvShow(tvId);
+    const [show, subtitleUrl] = await Promise.all([
+      getTmdbTvShow(tvId),
+      getSpanishSubtitleUrl({ tmdbId: tvId, season, episode: episodeNum }),
+    ]);
     const localMatch = await findLocalMatch('series', show);
     if (localMatch) {
       const localPosts = await fetchLocalEpisodePosts(localMatch.numericId, season);
@@ -297,7 +302,6 @@ export async function GET(request) {
       }
     }
 
-    const subtitleUrl = await getSpanishSubtitleUrl({ tmdbId: tvId, season, episode: episodeNum });
     const embeds = buildEmbedProviders({
       type: 'series',
       tmdbId: tvId,
@@ -347,9 +351,13 @@ export async function GET(request) {
 
     const { imdbId, tmdbId } = await resolveTvmazeShow(tvmazeId);
 
+    const [show, subtitleUrl] = await Promise.all([
+      tmdbId ? getTmdbTvShow(tmdbId) : Promise.resolve(null),
+      getSpanishSubtitleUrl({ imdbId, tmdbId, season, episode: episodeNum }),
+    ]);
+
     let trailerUrl = null;
-    if (tmdbId) {
-      const show = await getTmdbTvShow(tmdbId);
+    if (show) {
       const localMatch = await findLocalMatch('series', show);
       if (localMatch) {
         const localPosts = await fetchLocalEpisodePosts(localMatch.numericId, season);
@@ -361,12 +369,11 @@ export async function GET(request) {
           }
         }
       }
-      if (show?.trailer) {
+      if (show.trailer) {
         trailerUrl = youtubeEmbedFromWatchUrl(show.trailer);
       }
     }
 
-    const subtitleUrl = await getSpanishSubtitleUrl({ imdbId, tmdbId, season, episode: episodeNum });
     const embeds = buildEmbedProviders({
       type: 'series',
       tmdbId,
@@ -421,19 +428,22 @@ export async function GET(request) {
     const tmdbId = tmdbLookup?.id ? String(tmdbLookup.id) : null;
 
     let trailerUrl = null;
-    if (tmdbId) {
-      const media = mediaType === 'series' ? await getTmdbTvShow(tmdbId) : await getTmdbMovie(tmdbId);
-      if (media?.trailer) {
-        trailerUrl = youtubeEmbedFromWatchUrl(media.trailer);
-      }
+    const [media, subtitleUrl] = await Promise.all([
+      tmdbId
+        ? (mediaType === 'series' ? getTmdbTvShow(tmdbId) : getTmdbMovie(tmdbId))
+        : Promise.resolve(null),
+      getSpanishSubtitleUrl({
+        imdbId: rawImdbId,
+        tmdbId,
+        season: season || '1',
+        episode: episodeNum || '1',
+      }),
+    ]);
+
+    if (media?.trailer) {
+      trailerUrl = youtubeEmbedFromWatchUrl(media.trailer);
     }
 
-    const subtitleUrl = await getSpanishSubtitleUrl({
-      imdbId: rawImdbId,
-      tmdbId,
-      season: season || '1',
-      episode: episodeNum || '1',
-    });
     const embeds = buildEmbedProviders({
       type: mediaType,
       tmdbId,

@@ -68,8 +68,10 @@ export async function POST(request) {
         `[scrape] ${type} página ${currentPage}/${totalPages}: ${result.items.length} items`
       );
 
-      await saveMediaBatch(result.items);
-      await updateFilterMetadata(type, result.items);
+      await Promise.all([
+        saveMediaBatch(result.items),
+        updateFilterMetadata(type, result.items),
+      ]);
       totalScraped += result.items.length;
       pagesDone++;
 
