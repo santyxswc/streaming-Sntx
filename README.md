@@ -155,6 +155,7 @@ service cloud.firestore {
 - [docs/CHAT_MODERATION.md](docs/CHAT_MODERATION.md) — panel de moderación y secretos.
 - [SECURITY.md](SECURITY.md) — reporte responsable de vulnerabilidades.
 - [LICENSE](LICENSE) — licencia MIT.
+- [NOTICE.md](NOTICE.md) — aviso de autoría y atribución requerida al reutilizar el proyecto.
 
 ## Checklist antes de publicar en GitHub
 
@@ -170,4 +171,4 @@ service cloud.firestore {
 
 ---
 
-© 2026 Luvana. Proyecto publicado bajo [licencia MIT](LICENSE).
+© 2026 [santyxswc](https://github.com/santyxswc). Proyecto publicado bajo [licencia MIT](LICENSE) — ver también [NOTICE.md](NOTICE.md) para la atribución requerida al reutilizarlo.
