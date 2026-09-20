@@ -104,8 +104,10 @@ function initFirebaseAdmin() {
 async function main() {
   const db = initFirebaseAdmin();
   console.log('Migrando etiquetas de género...');
-  const moviesCount = await migrateCollection(db, 'movies');
-  const seriesCount = await migrateCollection(db, 'series');
+  const [moviesCount, seriesCount] = await Promise.all([
+    migrateCollection(db, 'movies'),
+    migrateCollection(db, 'series'),
+  ]);
   console.log(`Listo: ${moviesCount} películas, ${seriesCount} series actualizadas.`);
 }
 

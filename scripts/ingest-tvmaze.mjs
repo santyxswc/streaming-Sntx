@@ -208,8 +208,8 @@ async function loadExistingSeriesTitles(sql) {
   return set;
 }
 
-async function upsertShow(sql, item) {
-  await sql`
+function getUpsertShowQuery(sql, item) {
+  return sql`
     INSERT INTO media (
       id, media_type, title, original_title, overview, href, image, backdrop,
       year, rating, genres, country, trailer, numeric_id, scraped_at, payload
@@ -249,6 +249,13 @@ async function upsertShow(sql, item) {
   `;
 }
 
+async function upsertShowsBatch(sql, items, chunkSize = 50) {
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    await sql.begin((trx) => chunk.map((item) => getUpsertShowQuery(trx, item)));
+  }
+}
+
 async function updateSeriesFilterMetadata(sql, items) {
   if (!items.length) return;
   const rows = await sql`SELECT years, countries FROM catalog_metadata WHERE facet_key = 'series'`;
@@ -279,7 +286,7 @@ async function updateSeriesFilterMetadata(sql, items) {
 
 async function main() {
   const { startPage, startPageExplicit, maxPages, delayMs, full } = parseArgs();
-  const sql = postgres(DATABASE_URL, { max: 1, prepare: false });
+  const sql = postgres(DATABASE_URL, { max: 4, prepare: false });
 
   let effectiveStartPage = startPage;
   if (!startPageExplicit) {
@@ -297,8 +304,10 @@ async function main() {
       (full ? ' hasta que TVmaze devuelva 404' : `, ${maxPages} página(s)`)
   );
 
-  const existingIds = await loadExistingIds(sql);
-  const existingTitles = await loadExistingSeriesTitles(sql);
+  const [existingIds, existingTitles] = await Promise.all([
+    loadExistingIds(sql),
+    loadExistingSeriesTitles(sql),
+  ]);
   console.log(`[ingest-tvmaze] ${existingIds.size} ids y ${existingTitles.size} títulos de series ya en catálogo.`);
 
   let totalInserted = 0;
@@ -348,11 +357,13 @@ async function main() {
       batchItems.push(item);
     }
 
-    for (const item of batchItems) {
-      await upsertShow(sql, item);
-      insertedThisPage++;
+    if (batchItems.length > 0) {
+      await Promise.all([
+        upsertShowsBatch(sql, batchItems),
+        updateSeriesFilterMetadata(sql, batchItems),
+      ]);
+      insertedThisPage = batchItems.length;
     }
-    await updateSeriesFilterMetadata(sql, batchItems);
 
     totalInserted += insertedThisPage;
     totalDuplicates += duplicatesThisPage;

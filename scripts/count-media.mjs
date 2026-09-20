@@ -27,11 +27,15 @@ if (!url) {
 }
 
 const sql = postgres(url, { max: 1 });
-const [movies] = await sql`SELECT COUNT(*)::int as n FROM media WHERE media_type = 'movie'`;
-const [series] = await sql`SELECT COUNT(*)::int as n FROM media WHERE media_type = 'series'`;
-const [total] = await sql`SELECT COUNT(*)::int as n FROM media`;
+const [counts] = await sql`
+  SELECT
+    COUNT(*) FILTER (WHERE media_type = 'movie')::int as movies,
+    COUNT(*) FILTER (WHERE media_type = 'series')::int as series,
+    COUNT(*)::int as total
+  FROM media
+`;
 await sql.end();
 
-console.log('Películas:', movies.n);
-console.log('Series:', series.n);
-console.log('Total:', total.n);
+console.log('Películas:', counts.movies);
+console.log('Series:', counts.series);
+console.log('Total:', counts.total);
