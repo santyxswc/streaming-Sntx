@@ -1,0 +1,223 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "genres", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "country", "order": "ASCENDING" },
+        { "fieldPath": "scrapedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "DESCENDING" },
+        { "fieldPath": "rating", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "DESCENDING" },
+        { "fieldPath": "rating", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rating", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rating", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "movies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "series",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "id", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

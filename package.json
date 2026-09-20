@@ -1,0 +1,49 @@
+{
+  "name": "luvana",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "migrate:genres": "node scripts/migrate-genre-labels.mjs",
+    "ingest:la-movie": "node scripts/ingest-la-movie.mjs",
+    "ingest:series:full": "cross-env INGEST_FULL=1 INGEST_TYPE=series node scripts/ingest-la-movie.mjs",
+    "ingest:movie:full": "cross-env INGEST_FULL=1 INGEST_TYPE=movie node scripts/ingest-la-movie.mjs",
+    "ingest:movie:7000": "cross-env INGEST_FULL=1 INGEST_TYPE=movie INGEST_MAX_PAGES=7000 node scripts/ingest-la-movie.mjs",
+    "ingest:series:7000": "cross-env INGEST_FULL=1 INGEST_TYPE=series INGEST_MAX_PAGES=7000 node scripts/ingest-la-movie.mjs",
+    "ingest:tmdb": "node scripts/ingest-tmdb.mjs",
+    "ingest:tmdb:movie:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=movie node scripts/ingest-tmdb.mjs",
+    "ingest:tmdb:series:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=series node scripts/ingest-tmdb.mjs",
+    "ingest:tmdb:movie:es:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=movie TMDB_INGEST_ORIGINAL_LANGUAGE=es node scripts/ingest-tmdb.mjs",
+    "ingest:tmdb:series:es:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=series TMDB_INGEST_ORIGINAL_LANGUAGE=es node scripts/ingest-tmdb.mjs",
+    "ingest:tvmaze": "node scripts/ingest-tvmaze.mjs",
+    "ingest:tvmaze:full": "cross-env TVMAZE_FULL=1 node scripts/ingest-tvmaze.mjs",
+    "migrate:neon": "node scripts/run-neon-migration.mjs"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "axios": "^1.13.6",
+    "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.10.0",
+    "firebase-admin": "^13.7.0",
+    "framer-motion": "^12.36.0",
+    "lucide-react": "^0.577.0",
+    "next": "16.1.6",
+    "postgres": "^3.4.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.5.0",
+    "uuid": "^13.0.0",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "cross-env": "^7.0.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4"
+  }
+}
