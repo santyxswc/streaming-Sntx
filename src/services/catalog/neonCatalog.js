@@ -34,51 +34,58 @@ function rowToItem(row) {
   };
 }
 
+function getUpsertMediaItemQuery(sql, item) {
+  const mt = item.type === "series" ? "series" : "movie";
+  const scraped = item.scrapedAt ? new Date(item.scrapedAt) : new Date();
+  const genres = Array.isArray(item.genres) ? item.genres : [];
+  return sql`
+    INSERT INTO media (
+      id, media_type, title, original_title, overview, href, image, backdrop,
+      year, rating, genres, country, trailer, numeric_id, scraped_at, payload
+    ) VALUES (
+      ${item.id},
+      ${mt},
+      ${item.title ?? null},
+      ${item.originalTitle ?? null},
+      ${item.overview ?? null},
+      ${item.href ?? null},
+      ${item.image ?? null},
+      ${item.backdrop ?? null},
+      ${item.year != null ? String(item.year) : null},
+      ${item.rating ?? null},
+      ${genres},
+      ${item.country ?? null},
+      ${item.trailer ?? null},
+      ${item.numericId != null ? Number(item.numericId) : null},
+      ${scraped},
+      ${item}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      media_type = EXCLUDED.media_type,
+      title = EXCLUDED.title,
+      original_title = EXCLUDED.original_title,
+      overview = EXCLUDED.overview,
+      href = EXCLUDED.href,
+      image = EXCLUDED.image,
+      backdrop = EXCLUDED.backdrop,
+      year = EXCLUDED.year,
+      rating = EXCLUDED.rating,
+      genres = EXCLUDED.genres,
+      country = EXCLUDED.country,
+      trailer = EXCLUDED.trailer,
+      numeric_id = EXCLUDED.numeric_id,
+      scraped_at = EXCLUDED.scraped_at,
+      payload = EXCLUDED.payload
+  `;
+}
+
 export const saveMediaBatch = async (items) => {
+  if (!items || !items.length) return;
   const sql = getNeonSql();
-  for (const item of items) {
-    const mt = item.type === "series" ? "series" : "movie";
-    const scraped = item.scrapedAt ? new Date(item.scrapedAt) : new Date();
-    const genres = Array.isArray(item.genres) ? item.genres : [];
-    await sql`
-      INSERT INTO media (
-        id, media_type, title, original_title, overview, href, image, backdrop,
-        year, rating, genres, country, trailer, numeric_id, scraped_at, payload
-      ) VALUES (
-        ${item.id},
-        ${mt},
-        ${item.title ?? null},
-        ${item.originalTitle ?? null},
-        ${item.overview ?? null},
-        ${item.href ?? null},
-        ${item.image ?? null},
-        ${item.backdrop ?? null},
-        ${item.year != null ? String(item.year) : null},
-        ${item.rating ?? null},
-        ${genres},
-        ${item.country ?? null},
-        ${item.trailer ?? null},
-        ${item.numericId != null ? Number(item.numericId) : null},
-        ${scraped},
-        ${item}
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        media_type = EXCLUDED.media_type,
-        title = EXCLUDED.title,
-        original_title = EXCLUDED.original_title,
-        overview = EXCLUDED.overview,
-        href = EXCLUDED.href,
-        image = EXCLUDED.image,
-        backdrop = EXCLUDED.backdrop,
-        year = EXCLUDED.year,
-        rating = EXCLUDED.rating,
-        genres = EXCLUDED.genres,
-        country = EXCLUDED.country,
-        trailer = EXCLUDED.trailer,
-        numeric_id = EXCLUDED.numeric_id,
-        scraped_at = EXCLUDED.scraped_at,
-        payload = EXCLUDED.payload
-    `;
+  const CHUNK_SIZE = 50;
+  for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+    const chunk = items.slice(i, i + CHUNK_SIZE);
+    await sql.begin((trx) => chunk.map((item) => getUpsertMediaItemQuery(trx, item)));
   }
 };
 
@@ -375,9 +382,24 @@ export const searchCatalog = async (qStr) => {
     return new RegExp(`\\b${escaped}\\b`, "i");
   });
 
-  // Solo columnas de texto para puntuar: evita transferir `payload` (JSON pesado
-  // con la respuesta completa de TMDB/TVmaze) de las ~100k filas en cada tecleo.
-  const rows = await sql`SELECT id, title, original_title, overview FROM media`;
+  // Pre-filtra en SQL usando los términos de búsqueda en vez de transferir toda la tabla
+  const conditions = searchWords.map((w) => {
+    const norm = normalizeForSearch(w);
+    const pat1 = `%${w}%`;
+    const pat2 = `%${norm}%`;
+    if (w === norm) {
+      return sql`(title ILIKE ${pat1} OR original_title ILIKE ${pat1} OR overview ILIKE ${pat1} OR id ILIKE ${pat1})`;
+    }
+    return sql`(title ILIKE ${pat1} OR original_title ILIKE ${pat1} OR overview ILIKE ${pat1} OR id ILIKE ${pat1} OR title ILIKE ${pat2} OR original_title ILIKE ${pat2} OR overview ILIKE ${pat2} OR id ILIKE ${pat2})`;
+  });
+
+  const whereClause = conditions.reduce((acc, cond) => sql`${acc} AND ${cond}`);
+  const rows = await sql`
+    SELECT id, title, original_title, overview
+    FROM media
+    WHERE ${whereClause}
+    LIMIT 250
+  `;
   const phrase = qStr.toLowerCase().trim();
 
   const scored = rows
@@ -523,40 +545,44 @@ export const getRecommendationsForItem = async (item, count = 60) => {
 export const findMediaForAiLookup = async (collectionName, titlesToTry) => {
   const sql = getNeonSql();
   const mediaType = collectionName === "series" ? "series" : "movie";
+  const validTitles = (titlesToTry || []).filter(Boolean);
+  if (!validTitles.length) return { winner: null, winnerId: null };
 
-  for (const title of titlesToTry) {
-    if (!title) continue;
-    const slug = title
+  const slugs = validTitles.map((t) =>
+    t
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/ /g, "-")
-      .replace(/[^\w-]/g, "");
+      .replace(/[^\w-]/g, "")
+  ).filter(Boolean);
+
+  // 1. Comprobar por slug directo en una sola consulta
+  if (slugs.length) {
     const bySlug = await sql`
-      SELECT * FROM media WHERE id = ${slug} AND media_type = ${mediaType} LIMIT 1
+      SELECT * FROM media
+      WHERE media_type = ${mediaType} AND id = ANY(${slugs})
     `;
     if (bySlug.length) {
-      return { winner: rowToItem(bySlug[0]), winnerId: bySlug[0].id };
+      for (const s of slugs) {
+        const match = bySlug.find((r) => r.id === s);
+        if (match) return { winner: rowToItem(match), winnerId: match.id };
+      }
     }
   }
 
-  for (const title of titlesToTry) {
-    if (!title) continue;
-    const exactTitle = await sql`
-      SELECT * FROM media
-      WHERE media_type = ${mediaType} AND title = ${title}
-      LIMIT 1
-    `;
-    if (exactTitle.length) {
-      return { winner: rowToItem(exactTitle[0]), winnerId: exactTitle[0].id };
-    }
-    const exactOrig = await sql`
-      SELECT * FROM media
-      WHERE media_type = ${mediaType} AND original_title = ${title}
-      LIMIT 1
-    `;
-    if (exactOrig.length) {
-      return { winner: rowToItem(exactOrig[0]), winnerId: exactOrig[0].id };
+  // 2. Comprobar por título exacto u original_title en una sola consulta
+  const byTitles = await sql`
+    SELECT * FROM media
+    WHERE media_type = ${mediaType}
+      AND (title = ANY(${validTitles}) OR original_title = ANY(${validTitles}))
+  `;
+  if (byTitles.length) {
+    for (const title of validTitles) {
+      const matchTitle = byTitles.find((r) => r.title === title);
+      if (matchTitle) return { winner: rowToItem(matchTitle), winnerId: matchTitle.id };
+      const matchOrig = byTitles.find((r) => r.original_title === title);
+      if (matchOrig) return { winner: rowToItem(matchOrig), winnerId: matchOrig.id };
     }
   }
 

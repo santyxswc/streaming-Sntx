@@ -181,10 +181,11 @@ export async function discoverTmdbPage(
   if (genre) params.with_genres = String(genre);
   if (originalLanguage) params.with_original_language = String(originalLanguage);
 
-  const data = await tmdbFetch(`/discover/${type}`, params);
+  const [data, genreMap] = await Promise.all([
+    tmdbFetch(`/discover/${type}`, params),
+    getTmdbGenreMap(mediaType),
+  ]);
   if (!data) return { items: [], totalPages: 0, totalResults: 0 };
-
-  const genreMap = await getTmdbGenreMap(mediaType);
   const items = (data.results || []).map((r) => {
     const mapped = mapTmdbToMedia(r, mediaType);
     mapped.genres = (r.genre_ids || [])
