@@ -1,7 +1,7 @@
 import ChatModerationPanel from '@/components/ChatModerationPanel';
 
 export const metadata = {
-  title: 'Moderación chat | Luvana',
+  title: 'Moderación chat | streaming-Sntx',
   robots: { index: false, follow: false },
 };
 

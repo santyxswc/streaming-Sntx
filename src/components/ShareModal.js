@@ -10,7 +10,7 @@ const ShareModal = ({ isOpen, onClose, item }) => {
   if (!isOpen) return null;
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const shareTitle = `Mira ${item.title} en Luvana`;
+  const shareTitle = `Mira ${item.title} en streaming-Sntx`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareUrl);

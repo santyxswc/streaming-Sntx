@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Luvana",
+  "productName": "streaming-Sntx",
   "version": "0.1.0",
-  "identifier": "com.luvana.app",
+  "identifier": "com.streamingsntx.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Luvana | Streaming de Películas y Series",
+        "title": "streaming-Sntx | Streaming de Películas y Series",
         "width": 1280,
         "height": 800,
         "minWidth": 800,

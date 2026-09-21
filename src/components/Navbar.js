@@ -11,6 +11,8 @@ import MediaImage from '@/components/MediaImage';
 
 const AISearch = dynamic(() => import('@/components/AISearch'), { ssr: false, loading: () => null });
 const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false, loading: () => null });
+const DonateModal = dynamic(() => import('@/components/DonateModal'), { ssr: false, loading: () => null });
+import DonateButton from '@/components/DonateButton';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 
 import { ALL_GENRES } from '@/lib/genreMap';
@@ -35,6 +37,8 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubmenu, setMobileSubmenu] = useState(null); // 'series' | 'movies' | null
   const [isAdmin, setIsAdmin] = useState(false);
+  const [donateModalOpen, setDonateModalOpen] = useState(false);
+  const cafecitoUsername = process.env.NEXT_PUBLIC_CAFECITO_USERNAME;
 
   useEffect(() => {
     const unsubscribe = initAuth();
@@ -153,8 +157,8 @@ const Navbar = () => {
         >
           <Menu size={24} />
         </button>
-        <Link href="/" className="text-primary text-2xl md:text-3xl font-bold tracking-tighter uppercase" onClick={() => setMobileMenuOpen(false)}>
-          Luvana
+        <Link href="/" className="font-display text-2xl md:text-3xl font-bold tracking-tighter" onClick={() => setMobileMenuOpen(false)}>
+          streaming<span className="text-secondary">-Sntx</span>
         </Link>
         <div className="hidden lg:flex items-center gap-5 text-sm text-gray-200">
            <Link href="/" className="hover:text-white transition-premium">Inicio</Link>
@@ -274,14 +278,18 @@ const Navbar = () => {
           </AnimatePresence>
         </div>
         
-        <button 
+        <button
           onClick={() => setAiSearchOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 md:px-4 bg-gradient-to-r from-primary to-accent rounded-full text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(229,9,20,0.3)] hover:shadow-[0_0_30px_rgba(229,9,20,0.5)] border border-white/10"
+          className="group relative flex items-center rounded-full p-[1.5px] bg-gradient-to-r from-primary to-secondary hover:scale-105 active:scale-95 transition-all shadow-[0_0_18px_rgba(139,92,246,0.3)] hover:shadow-[0_0_28px_rgba(6,182,212,0.4)]"
         >
-          <Sparkles size={16} className="text-white fill-white/20 shrink-0" />
-          <span className="md:hidden">Luvana AI</span>
-          <span className="hidden md:inline">Pregunta a la IA</span>
+          <span className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-background text-xs font-black uppercase tracking-widest">
+            <Sparkles size={16} className="text-secondary fill-secondary/20 shrink-0" />
+            <span className="md:hidden">IA</span>
+            <span className="hidden md:inline">Pregunta a la IA</span>
+          </span>
         </button>
+
+        <DonateButton onClick={() => setDonateModalOpen(true)} variant="navbar" />
 
         {aiSearchOpen && <AISearch isOpen={aiSearchOpen} onClose={() => setAiSearchOpen(false)} />}
         {authModalOpen && (
@@ -289,6 +297,13 @@ const Navbar = () => {
             isOpen={authModalOpen}
             onClose={() => setAuthModalOpen(false)}
             initialMode={authInitialMode}
+          />
+        )}
+        {donateModalOpen && (
+          <DonateModal
+            isOpen={donateModalOpen}
+            onClose={() => setDonateModalOpen(false)}
+            cafecitoUsername={cafecitoUsername}
           />
         )}
         
@@ -437,6 +452,10 @@ const Navbar = () => {
                 <Link href="/mi-lista" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/10 text-white font-medium">
                   Mi lista
                 </Link>
+                <DonateButton
+                  onClick={() => { setDonateModalOpen(true); setMobileMenuOpen(false); }}
+                  variant="drawer"
+                />
                 {user && isAdmin && (
                   <Link
                     href="/admin/chat-moderacion"

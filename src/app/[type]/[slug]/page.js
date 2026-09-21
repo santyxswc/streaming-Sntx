@@ -15,7 +15,7 @@ export async function generateMetadata({ params }) {
         title: item.title,
         description: item.overview?.slice(0, 160) + '...',
         openGraph: {
-          title: `${item.title} | Luvana`,
+          title: `${item.title} | streaming-Sntx`,
           description: item.overview,
           images: [item.backdrop || item.image],
         },
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }) {
     console.error("Metadata error:", err);
   }
 
-  return { title: 'Ver Contenido | Luvana' };
+  return { title: 'Ver Contenido | streaming-Sntx' };
 }
 
 export default function DetailPage() {

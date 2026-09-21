@@ -483,7 +483,7 @@ export const recordMediaView = async (mediaId) => {
   }
 };
 
-/** Tendencias: más vistos en Luvana + estrenos 2025/2026 populares como fallback. */
+/** Tendencias: más vistos en streaming-Sntx + estrenos 2025/2026 populares como fallback. */
 export const getTrendingMedia = async (count = 60) => {
   const sql = getNeonSql();
   const TRENDING_DAYS = 30;

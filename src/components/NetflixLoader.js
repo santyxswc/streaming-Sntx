@@ -34,9 +34,9 @@ const NetflixLoader = ({ fullScreen = true, message = 'Iniciando transmisión' }
             duration: 1.2,
             ease: "easeOut"
           }}
-          className="relative text-primary text-7xl md:text-9xl font-black tracking-tighter uppercase select-none"
+          className="relative text-primary text-5xl md:text-7xl font-black tracking-tighter uppercase select-none"
         >
-          Luvana
+          streaming<span className="text-secondary">-Sntx</span>
           
           {/* Shine Effect */}
           <motion.div 
@@ -65,7 +65,7 @@ const NetflixLoader = ({ fullScreen = true, message = 'Iniciando transmisión' }
             repeat: Infinity,
             ease: "linear"
           }}
-          className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_rgba(229,9,20,0.8)]"
+          className="absolute inset-0 bg-primary rounded-full shadow-[0_0_15px_rgba(139,92,246,0.8)]"
         />
       </div>
 

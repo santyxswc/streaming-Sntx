@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
+/*
+ * Cinematic Cyber-Stream design system.
+ * These are real Tailwind v4 theme tokens (--color-*), so bg-primary,
+ * text-secondary, border-accent, from-primary, etc. resolve everywhere
+ * they're already used across the app, not just in this file.
+ */
 @theme inline {
   --font-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-sora), var(--font-plus-jakarta-sans), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-background: #0a0a0f;
+  --color-foreground: #ede9f5;
+  --color-primary: #8b5cf6;
+  --color-secondary: #06b6d4;
+  --color-accent: #e11d48;
+  --color-card-bg: #12121a;
+  --color-card-hover: #1b1b24;
 }
 
 :root {
-  --background: #0f0f0f;
-  --foreground: #ffffff;
-  --primary: #e50914;
-  --secondary: #1a1a1a;
-  --accent: #545454;
-  --card-bg: #141414;
-  --card-hover: #1f1f1f;
-  --navbar-bg: rgba(0, 0, 0, 0.7);
+  --navbar-bg: rgba(10, 10, 15, 0.75);
 }
 
 html {
@@ -28,8 +35,8 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
   margin: 0;
@@ -45,22 +52,22 @@ h1, h2, h3, h4, h5, h6 {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: var(--color-background);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--color-accent);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: var(--color-primary);
 }
 
 /* Glassmorphism Classes */
 .glass {
   background: var(--navbar-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.15);
 }
 
 /* High-end transitions */
@@ -90,9 +97,9 @@ h1, h2, h3, h4, h5, h6 {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: var(--color-accent);
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: var(--color-primary);
 }
