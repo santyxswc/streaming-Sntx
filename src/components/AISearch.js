@@ -72,11 +72,11 @@ export default function AISearch({ isOpen, onClose }) {
             {/* Header */}
             <div className="p-4 md:p-8 flex items-center justify-between border-b border-white/5 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary rounded-xl shadow-[0_0_20px_rgba(229,9,20,0.4)]">
+                <div className="p-2 bg-primary rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.4)]">
                   <Sparkles size={24} className="text-white fill-white/20" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tighter italic leading-none">Asistente Luvana</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter italic leading-none">Asistente streaming-Sntx</h2>
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Encuentra películas y series cuando no recuerdas el nombre</p>
                 </div>
               </div>
@@ -122,7 +122,7 @@ export default function AISearch({ isOpen, onClose }) {
                     </div>
                     <div className="space-y-2">
                        <p className="text-xl font-bold tracking-tight">Analizando tu memoria...</p>
-                       <p className="text-sm text-gray-500 italic max-w-xs mx-auto">Consultando todos los rincones de Luvana para encontrar esa producción especial.</p>
+                       <p className="text-sm text-gray-500 italic max-w-xs mx-auto">Consultando todos los rincones del catálogo para encontrar esa producción especial.</p>
                     </div>
                   </div>
                 ) : result ? (

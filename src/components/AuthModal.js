@@ -89,7 +89,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
           {mode === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}
         </h2>
         <p className="text-zinc-400 mb-8">
-          {mode === 'login' ? 'Ingresa tus credenciales para continuar' : 'Únete a Luvana y guarda tus favoritos'}
+          {mode === 'login' ? 'Ingresa tus credenciales para continuar' : 'Únete a streaming-Sntx y guarda tus favoritos'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

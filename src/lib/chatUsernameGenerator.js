@@ -116,6 +116,8 @@ const RESERVED_EXACT = new Set([
   'support',
   'helpdesk',
   'luvana',
+  'sntx',
+  'streamingsntx',
   'oficial',
   'official',
   'null',
@@ -128,7 +130,7 @@ const RESERVED_EXACT = new Set([
   'server',
 ]);
 
-const RESERVED_PREFIX = ['admin', 'mod-', 'sys-', 'luvana', 'support'];
+const RESERVED_PREFIX = ['admin', 'mod-', 'sys-', 'luvana', 'sntx', 'support'];
 
 /**
  * @param {string} key - resultado de normalizeChatNameKey

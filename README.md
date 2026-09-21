@@ -1,6 +1,8 @@
-# Luvana — plataforma de streaming (Next.js)
+# streaming-Sntx — plataforma de streaming (Next.js)
 
-Luvana es, en esencia, un **clon de la experiencia de Netflix**: misma lógica de presentación (filas, detalle, reproductor, búsqueda) y una capa visual pensada para recordar a ese tipo de plataformas, que es justo lo que suele atraer la curiosidad. No es un producto oficial ni un cliente de Netflix: el catálogo y las fichas se **rellenan con datos obtenidos por scraping/ingest** (incluidos enlaces a streams de terceros para películas y series) y viven en tu propia base (Firebase/Neon según configuración).
+streaming-Sntx es, en esencia, un **clon de la experiencia de Netflix**: misma lógica de presentación (filas, detalle, reproductor, búsqueda) y una capa visual cinematográfica propia (paleta violeta/cian, glassmorphism, tipografía Sora/Plus Jakarta Sans/JetBrains Mono) pensada para recordar a ese tipo de plataformas, que es justo lo que suele atraer la curiosidad. No es un producto oficial ni un cliente de Netflix: el catálogo y las fichas se **rellenan con datos obtenidos por scraping/ingest** (incluidos enlaces a streams de terceros para películas y series) y viven en tu propia base (Firebase/Neon según configuración).
+
+Este proyecto nació como fork de **Luvana** (código base MIT); el aviso de autoría original y la atribución requerida al reutilizarlo están en [NOTICE.md](NOTICE.md).
 
 Este repositorio se publica para **experimentación y aprendizaje** — ver cómo encajar un front “tipo streaming premium” con Next.js App Router, auth con Firebase, backend en rutas API, chat opcional en Neon y app de escritorio con Tauri.
 
@@ -16,8 +18,8 @@ Este repositorio se publica para **experimentación y aprendizaje** — ver cóm
 ## Instalación local (web)
 
 ```bash
-git clone https://github.com/sicksides88/luvana-app.git
-cd luvana
+git clone https://github.com/santyxswc/streaming-Sntx.git
+cd streaming-Sntx
 npm install
 cp .env.example .env.local
 # Edita .env.local con tus valores (Firebase, etc.)

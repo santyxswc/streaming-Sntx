@@ -23,36 +23,36 @@ const fontMono = JetBrains_Mono({
   weight: ["400", "600"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://luvana.pro";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://streaming-sntx.vercel.app";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Luvana | Streaming de Películas y Series en HD",
-    template: "%s | Luvana"
+    default: "streaming-Sntx | Streaming de Películas y Series en HD",
+    template: "%s | streaming-Sntx"
   },
-  description: "Disfruta del mejor contenido de películas, series y anime con una experiencia premium cinematográfica.",
-  keywords: ["streaming", "peliculas", "series", "anime", "hd", "estrenos", "luvana"],
-  authors: [{ name: "Luvana Team" }],
+  description: "Disfruta del mejor contenido de películas, series y anime con una experiencia premium cinematográfica y búsqueda asistida por IA.",
+  keywords: ["streaming", "peliculas", "series", "anime", "hd", "estrenos", "sntx"],
+  authors: [{ name: "streaming-Sntx" }],
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: siteUrl,
-    siteName: "Luvana",
-    title: "Luvana | Tu Cinemateca Premium",
+    siteName: "streaming-Sntx",
+    title: "streaming-Sntx | Tu Cinemateca Premium",
     description: "Cientos de títulos a un click de distancia. La mejor calidad de streaming con diseño cinematográfico.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Luvana Streaming Platform",
+        alt: "streaming-Sntx Streaming Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Luvana | Streaming Premium",
+    title: "streaming-Sntx | Streaming Premium",
     description: "Descubre lo último en cine y series con la mejor experiencia visual.",
     images: ["/og-image.png"],
   },

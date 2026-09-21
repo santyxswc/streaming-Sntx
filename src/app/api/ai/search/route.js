@@ -34,7 +34,7 @@ export async function POST(req) {
     const identificationPrompt = [
       {
         role: 'system',
-        content: `Eres el Asistente Inteligente de Luvana. Tu misión es identificar qué película o serie está describiendo el usuario.
+        content: `Eres el Asistente Inteligente de streaming-Sntx. Tu misión es identificar qué película o serie está describiendo el usuario.
         
         Sigue estas reglas estrictas:
         1. Identifica el título en ESPAÑOL y el título ORIGINAL (INGLÉS/OTROS).
@@ -90,7 +90,7 @@ export async function POST(req) {
     const displayTitle = aiPrediction.titleSpanish || aiPrediction.titleOriginal;
     return NextResponse.json({ 
       success: true, 
-      message: `¡Identifiqué lo que buscas! Parece que es "${displayTitle}" (${aiPrediction.year}). Lamentablemente aún no la tenemos disponible en nuestro catálogo de Luvana, pero he tomado nota y la agregaremos muy pronto para ti.`,
+      message: `¡Identifiqué lo que buscas! Parece que es "${displayTitle}" (${aiPrediction.year}). Lamentablemente aún no la tenemos disponible en nuestro catálogo, pero he tomado nota y la agregaremos muy pronto para ti.`,
       data: null 
     });
 

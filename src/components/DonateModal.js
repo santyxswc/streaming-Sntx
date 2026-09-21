@@ -47,10 +47,10 @@ function DonateModal({ isOpen, onClose, cafecitoUsername }) {
                 <Coffee size={20} className="sm:w-6 sm:h-6 text-amber-400" />
               </div>
               <h3 className="text-lg sm:text-xl font-black uppercase tracking-tighter mb-1 text-white">
-                Donar un café a Luvana ☕
+                Donar un café a streaming-Sntx ☕
               </h3>
               <p className="text-gray-400 text-xs max-w-sm leading-relaxed">
-                Tu donación nos ayuda a seguir ofreciendo Luvana gratis para todos, sin anuncios que interrumpan tu película o serie. Cada aporte suma para que sigas disfrutando de la experiencia gratuita de Luvana 💜
+                Tu donación nos ayuda a seguir ofreciendo streaming-Sntx gratis para todos, sin anuncios que interrumpan tu película o serie. Cada aporte suma para que sigas disfrutando de la experiencia gratuita 💜
               </p>
             </div>
 

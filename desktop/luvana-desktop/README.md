@@ -1,6 +1,6 @@
-# Luvana Desktop
+# streaming-Sntx Desktop
 
-App de escritorio de Luvana para Windows, construida con Tauri 2 + React + Vite.
+App de escritorio de streaming-Sntx para Windows, construida con Tauri 2 + React + Vite.
 
 ## Requisitos
 
@@ -11,8 +11,8 @@ App de escritorio de Luvana para Windows, construida con Tauri 2 + React + Vite.
 ## Configuración
 
 1. Copia `.env.example` a `.env` y configura las variables:
-   - `VITE_API_URL`: URL de tu API (ej. https://luvana.pro)
-   - Variables de Firebase (copia desde `luvana/.env.local` cambiando `NEXT_PUBLIC_` por `VITE_`)
+   - `VITE_API_URL`: URL de tu API (ej. https://streaming-sntx.vercel.app)
+   - Variables de Firebase (copia desde el `.env.local` de la web cambiando `NEXT_PUBLIC_` por `VITE_`)
 
 2. Instala dependencias:
    ```bash
@@ -43,7 +43,7 @@ npm run tauri build  # App completa para Windows
 
 Los binarios se generan en `src-tauri/target/release/`:
 - `luvana-desktop.exe` - Ejecutable
-- `Luvana_0.1.0_x64_en-US.msi` - Instalador
+- `streaming-Sntx_0.1.0_x64_en-US.msi` - Instalador
 
 ## Estructura
 
