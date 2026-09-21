@@ -394,13 +394,22 @@ export const searchCatalog = async (qStr) => {
   });
 
   const whereClause = conditions.reduce((acc, cond) => sql`${acc} AND ${cond}`);
+  const phrase = qStr.toLowerCase().trim();
+  const phrasePattern = `%${phrase}%`;
+  // Sin ORDER BY, un LIMIT bajo podría cortar antes de llegar a las mejores
+  // coincidencias en búsquedas con muchos resultados (términos comunes).
+  // Priorizamos en SQL las filas que ya contienen la frase completa (título
+  // más corto primero, más probable que sea el match exacto) para que
+  // sobrevivan al LIMIT incluso si hay cientos de coincidencias parciales.
   const rows = await sql`
     SELECT id, title, original_title, overview
     FROM media
     WHERE ${whereClause}
-    LIMIT 250
+    ORDER BY
+      (title ILIKE ${phrasePattern} OR original_title ILIKE ${phrasePattern}) DESC,
+      LENGTH(COALESCE(title, '')) ASC
+    LIMIT 400
   `;
-  const phrase = qStr.toLowerCase().trim();
 
   const scored = rows
     .map((item) => {
