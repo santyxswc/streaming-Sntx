@@ -46,8 +46,9 @@ interface Episode {
 
 export default function DetailPage() {
   const { type, slug } = useParams<{ type: string; slug: string }>();
-  const { toggleFavorite, isFavorite } = useFavoritesStore();
-  const { user } = useAuthStore();
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const user = useAuthStore((s) => s.user);
 
   const [item, setItem] = useState<DetailItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +87,7 @@ export default function DetailPage() {
         return () => clearTimeout(timer);
       }
     }
-  }, [item]);
+  }, [item?.id, item?.type, item?.trailer]);
 
   const loadDetail = async () => {
     if (!type || !slug) return;

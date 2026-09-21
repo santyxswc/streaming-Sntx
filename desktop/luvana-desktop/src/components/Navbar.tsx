@@ -31,8 +31,10 @@ export default function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { user, logout, initAuth } = useAuthStore();
-  const { syncWithFirestore } = useFavoritesStore();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const initAuth = useAuthStore((s) => s.initAuth);
+  const syncWithFirestore = useFavoritesStore((s) => s.syncWithFirestore);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<"login" | "register">("login");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Play, Info, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,7 @@ interface BannerProps {
   movie: MediaItem | null;
 }
 
-export default function Banner({ movie }: BannerProps) {
+function Banner({ movie }: BannerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
@@ -18,7 +18,7 @@ export default function Banner({ movie }: BannerProps) {
       return () => clearTimeout(timer);
     }
     setIsPlaying(false);
-  }, [movie]);
+  }, [movie?.id, movie?.trailer]);
 
   if (!movie) return <div className="h-[80vh] bg-[var(--background)]" />;
 
@@ -139,3 +139,5 @@ export default function Banner({ movie }: BannerProps) {
     </div>
   );
 }
+
+export default memo(Banner);
