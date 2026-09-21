@@ -51,12 +51,14 @@ function buildEmbedProviders({ type = 'movie', tmdbId, imdbId, season = 1, episo
   const vidsrcxyzSub = `${subLink ? `&sub_url=${subLink}` : ''}&ds_lang=spa`;
 
   if (type === 'movie') {
-    embeds.push(
-      {
+    if (isTmdb) {
+      embeds.push({
         label: 'VidLink',
         server: 'vidlink',
         url: `https://vidlink.pro/movie/${id}${vidlinkSub}`,
-      },
+      });
+    }
+    embeds.push(
       {
         label: 'SuperEmbed',
         server: 'superembed',
@@ -78,12 +80,14 @@ function buildEmbedProviders({ type = 'movie', tmdbId, imdbId, season = 1, episo
       }
     );
   } else {
-    embeds.push(
-      {
+    if (isTmdb) {
+      embeds.push({
         label: 'VidLink',
         server: 'vidlink',
         url: `https://vidlink.pro/tv/${id}/${s}/${e}${vidlinkSub}`,
-      },
+      });
+    }
+    embeds.push(
       {
         label: 'SuperEmbed',
         server: 'superembed',
