@@ -1,17 +1,20 @@
 'use client';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Check, Volume2, VolumeX, ChevronDown } from 'lucide-react';
+import { memo } from 'react';
+import { motion } from 'framer-motion';
+import { Play, Plus, Check, ChevronDown } from 'lucide-react';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import MediaImage from './MediaImage';
 
 const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
-  const { toggleFavorite, isFavorite } = useFavoritesStore();
-  const { user } = useAuthStore();
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const user = useAuthStore((s) => s.user);
 
-  if (!isVisible) return null;
+  if (!isVisible || !item) return null;
+
+  const detailUrl = `/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`;
 
   return (
     <motion.div
@@ -35,7 +38,7 @@ const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
 
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
-          <Link href={`/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`}>
+          <Link href={detailUrl}>
             <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition-premium">
               <Play size={20} fill="black" className="ml-1" />
             </button>
@@ -47,7 +50,7 @@ const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
             {isFavorite(item.id) ? <Check size={20} /> : <Plus size={20} />}
           </button>
           <div className="flex-1" />
-          <Link href={`/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`}>
+          <Link href={detailUrl}>
             <button className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center hover:border-white transition-premium">
               <ChevronDown size={20} />
             </button>
@@ -69,4 +72,4 @@ const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
   );
 };
 
-export default ItemPreview;
+export default memo(ItemPreview);

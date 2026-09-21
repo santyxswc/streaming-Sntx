@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -7,7 +7,7 @@ import Link from 'next/link';
 import ItemPreview from './ItemPreview';
 import MediaImage from './MediaImage';
 
-const MovieCard = ({ item, isGrid = false }) => {
+const MovieCard = memo(({ item, isGrid = false }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const timerRef = useRef(null);
@@ -112,9 +112,10 @@ const MovieCard = ({ item, isGrid = false }) => {
       </AnimatePresence>
     </>
   );
-};
+});
+MovieCard.displayName = 'MovieCard';
 
-const MovieRow = ({ title, items, listingType }) => {
+const MovieRowComponent = ({ title, items, listingType }) => {
   const rowRef = useRef(null);
   const [isMoved, setIsMoved] = useState(false);
 
@@ -172,5 +173,7 @@ const MovieRow = ({ title, items, listingType }) => {
   );
 };
 
+const MovieRow = memo(MovieRowComponent);
+MovieRow.displayName = 'MovieRow';
 MovieRow.Card = MovieCard;
 export default MovieRow;

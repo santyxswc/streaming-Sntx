@@ -4,10 +4,21 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 
+const buildFavoriteIds = (items = []) => {
+  const ids = {};
+  for (let i = 0; i < items.length; i++) {
+    if (items[i]?.id) {
+      ids[items[i].id] = true;
+    }
+  }
+  return ids;
+};
+
 export const useFavoritesStore = create(
   persist(
     (set, get) => ({
       favorites: [],
+      favoriteIds: {},
       
       syncWithFirestore: async (userId) => {
         if (!userId || !isFirebaseConfigured || !db) return;
@@ -22,13 +33,15 @@ export const useFavoritesStore = create(
             
             // Merge local and cloud favorites, avoiding duplicates
             const merged = [...cloudFavorites];
+            const cloudIdMap = new Set(cloudFavorites.map(c => c.id));
             localFavorites.forEach(localItem => {
-              if (!merged.find(cloudItem => cloudItem.id === localItem.id)) {
+              if (localItem?.id && !cloudIdMap.has(localItem.id)) {
                 merged.push(localItem);
+                cloudIdMap.add(localItem.id);
               }
             });
             
-            set({ favorites: merged });
+            set({ favorites: merged, favoriteIds: buildFavoriteIds(merged) });
             await setDoc(docRef, { items: merged }, { merge: true });
           } else {
             // If first time, save local favorites to cloud
@@ -40,10 +53,11 @@ export const useFavoritesStore = create(
       },
 
       addFavorite: async (item, userId) => {
-        const { favorites } = get();
-        if (!favorites.find(f => f.id === item.id)) {
+        const { favorites, favoriteIds } = get();
+        if (!favoriteIds?.[item.id] && !favorites.find(f => f.id === item.id)) {
           const newFavorites = [...favorites, item];
-          set({ favorites: newFavorites });
+          const newIds = { ...favoriteIds, [item.id]: true };
+          set({ favorites: newFavorites, favoriteIds: newIds });
           
           if (userId && isFirebaseConfigured && db) {
             try {
@@ -58,7 +72,9 @@ export const useFavoritesStore = create(
 
       removeFavorite: async (id, userId) => {
         const newFavorites = get().favorites.filter(f => f.id !== id);
-        set({ favorites: newFavorites });
+        const newIds = { ...get().favoriteIds };
+        delete newIds[id];
+        set({ favorites: newFavorites, favoriteIds: newIds });
         
         if (userId && isFirebaseConfigured && db) {
           try {
@@ -71,7 +87,11 @@ export const useFavoritesStore = create(
       },
 
       isFavorite: (id) => {
-        return get().favorites.some(f => f.id === id);
+        const { favoriteIds, favorites } = get();
+        if (favoriteIds && typeof favoriteIds === 'object') {
+          return Boolean(favoriteIds[id]);
+        }
+        return favorites.some(f => f.id === id);
       },
 
       toggleFavorite: async (item, userId) => {
@@ -82,11 +102,18 @@ export const useFavoritesStore = create(
         }
       },
 
-      setFavorites: (favorites) => set({ favorites })
+      setFavorites: (favorites = []) => {
+        set({ favorites, favoriteIds: buildFavoriteIds(favorites) });
+      }
     }),
     {
       name: 'luvana-favorites',
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.favorites) {
+          state.favoriteIds = buildFavoriteIds(state.favorites);
+        }
+      },
     }
   )
 );

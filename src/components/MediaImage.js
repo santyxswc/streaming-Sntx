@@ -1,13 +1,12 @@
 'use client';
+import Image from 'next/image';
 import { Film } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * <img> seguro: Next.js/React lanza un warning y algunos navegadores
- * un request roto cuando src="" (string vacío). Si no hay imagen,
- * renderiza un placeholder oscuro con el título en vez de un <img> vacío.
+ * Componente de imagen optimizado con Next.js Image y fallback a placeholder.
  */
-export default function MediaImage({ src, alt, className, ...props }) {
+export default function MediaImage({ src, alt = '', className, width, height, priority = false, ...props }) {
   if (!src) {
     return (
       <div
@@ -26,7 +25,20 @@ export default function MediaImage({ src, alt, className, ...props }) {
     );
   }
 
+  const isFilled = !width && !height;
+
   return (
-    <img src={src} alt={alt} className={className} referrerPolicy="no-referrer" {...props} />
+    <Image
+      src={src}
+      alt={alt || ''}
+      className={className}
+      fill={isFilled}
+      width={width}
+      height={height}
+      sizes={isFilled ? '(max-width: 768px) 160px, (max-width: 1200px) 240px, 360px' : undefined}
+      priority={priority}
+      unoptimized
+      {...props}
+    />
   );
 }
