@@ -11,6 +11,8 @@ import MediaImage from '@/components/MediaImage';
 
 const AISearch = dynamic(() => import('@/components/AISearch'), { ssr: false, loading: () => null });
 const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false, loading: () => null });
+const DonateModal = dynamic(() => import('@/components/DonateModal'), { ssr: false, loading: () => null });
+import DonateButton from '@/components/DonateButton';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 
 import { ALL_GENRES } from '@/lib/genreMap';
@@ -35,6 +37,8 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubmenu, setMobileSubmenu] = useState(null); // 'series' | 'movies' | null
   const [isAdmin, setIsAdmin] = useState(false);
+  const [donateModalOpen, setDonateModalOpen] = useState(false);
+  const cafecitoUsername = process.env.NEXT_PUBLIC_CAFECITO_USERNAME;
 
   useEffect(() => {
     const unsubscribe = initAuth();
@@ -285,12 +289,21 @@ const Navbar = () => {
           </span>
         </button>
 
+        <DonateButton onClick={() => setDonateModalOpen(true)} variant="navbar" />
+
         {aiSearchOpen && <AISearch isOpen={aiSearchOpen} onClose={() => setAiSearchOpen(false)} />}
         {authModalOpen && (
           <AuthModal
             isOpen={authModalOpen}
             onClose={() => setAuthModalOpen(false)}
             initialMode={authInitialMode}
+          />
+        )}
+        {donateModalOpen && (
+          <DonateModal
+            isOpen={donateModalOpen}
+            onClose={() => setDonateModalOpen(false)}
+            cafecitoUsername={cafecitoUsername}
           />
         )}
         
@@ -439,6 +452,10 @@ const Navbar = () => {
                 <Link href="/mi-lista" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-lg hover:bg-white/10 text-white font-medium">
                   Mi lista
                 </Link>
+                <DonateButton
+                  onClick={() => { setDonateModalOpen(true); setMobileMenuOpen(false); }}
+                  variant="drawer"
+                />
                 {user && isAdmin && (
                   <Link
                     href="/admin/chat-moderacion"
