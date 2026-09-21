@@ -45,10 +45,6 @@ function buildEmbedProviders({ type = 'movie', tmdbId, imdbId, season = 1, episo
   const subLabel = encodeURIComponent('Español');
   const vidlinkSub = subLink ? `&sub_file=${subLink}&sub_label=${subLabel}` : '';
   const superembedSub = subLink ? `&sub_url=${subLink}&sub_label=${subLabel}` : '';
-  // ds_lang le pide al proveedor que seleccione español por defecto ENTRE los
-  // subtítulos que la propia fuente de video ya trae incluidos (no requiere
-  // Wyzie); sub_url fuerza uno externo cuando además lo tenemos.
-  const vidsrcxyzSub = `${subLink ? `&sub_url=${subLink}` : ''}&ds_lang=spa`;
 
   if (type === 'movie') {
     if (isTmdb) {
@@ -67,16 +63,21 @@ function buildEmbedProviders({ type = 'movie', tmdbId, imdbId, season = 1, episo
           : `https://multiembed.mov/?video_id=${id}`) + superembedSub,
       },
       {
-        label: 'Embed.su',
-        server: 'embedsu',
-        url: `https://embed.su/embed/movie/${id}`,
+        label: 'VidSrc TO',
+        server: 'vidsrcto',
+        url: `https://vidsrc.to/embed/movie/${id}` + (subLink ? `?sub_url=${subLink}` : ''),
       },
       {
-        label: 'VidSrc XYZ',
-        server: 'vidsrcxyz',
-        url: (isTmdb
-          ? `https://vidsrc.xyz/embed/movie?tmdb=${id}`
-          : `https://vidsrc.xyz/embed/movie?imdb=${id}`) + vidsrcxyzSub,
+        label: '2Embed',
+        server: '2embed',
+        url: isTmdb
+          ? `https://2embed.cc/embed/movie/${id}`
+          : `https://2embed.cc/embed/imdb/${id}`,
+      },
+      {
+        label: 'Videasy',
+        server: 'videasy',
+        url: `https://player.videasy.net/movie/${id}`,
       }
     );
   } else {
@@ -96,16 +97,21 @@ function buildEmbedProviders({ type = 'movie', tmdbId, imdbId, season = 1, episo
           : `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}`) + superembedSub,
       },
       {
-        label: 'Embed.su',
-        server: 'embedsu',
-        url: `https://embed.su/embed/tv/${id}/${s}/${e}`,
+        label: 'VidSrc TO',
+        server: 'vidsrcto',
+        url: `https://vidsrc.to/embed/tv/${id}/${s}/${e}` + (subLink ? `?sub_url=${subLink}` : ''),
       },
       {
-        label: 'VidSrc XYZ',
-        server: 'vidsrcxyz',
-        url: (isTmdb
-          ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
-          : `https://vidsrc.xyz/embed/tv?imdb=${id}&season=${s}&episode=${e}`) + vidsrcxyzSub,
+        label: '2Embed',
+        server: '2embed',
+        url: isTmdb
+          ? `https://2embed.cc/embed/tv/${id}/${s}/${e}`
+          : `https://2embed.cc/embedtv/${id}&s=${s}&e=${e}`,
+      },
+      {
+        label: 'Videasy',
+        server: 'videasy',
+        url: `https://player.videasy.net/tv/${id}/${s}/${e}`,
       }
     );
   }
