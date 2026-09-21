@@ -13,8 +13,19 @@ export interface MediaItem {
   [key: string]: unknown;
 }
 
+const buildFavoriteIds = (items: MediaItem[] = []): Record<string, boolean> => {
+  const ids: Record<string, boolean> = {};
+  for (let i = 0; i < items.length; i++) {
+    if (items[i]?.id) {
+      ids[items[i].id] = true;
+    }
+  }
+  return ids;
+};
+
 interface FavoritesState {
   favorites: MediaItem[];
+  favoriteIds: Record<string, boolean>;
   syncWithFirestore: (userId: string) => Promise<void>;
   addFavorite: (item: MediaItem, userId?: string) => Promise<void>;
   removeFavorite: (id: string, userId?: string) => Promise<void>;
@@ -27,6 +38,7 @@ export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
       favorites: [],
+      favoriteIds: {},
 
       syncWithFirestore: async (userId) => {
         if (!userId) return;
@@ -39,13 +51,15 @@ export const useFavoritesStore = create<FavoritesState>()(
           const localFavorites = get().favorites;
 
           const merged = [...cloudFavorites];
+          const cloudIdMap = new Set(cloudFavorites.map((c) => c.id));
           localFavorites.forEach((localItem) => {
-            if (!merged.find((cloudItem) => cloudItem.id === localItem.id)) {
+            if (localItem?.id && !cloudIdMap.has(localItem.id)) {
               merged.push(localItem);
+              cloudIdMap.add(localItem.id);
             }
           });
 
-          set({ favorites: merged });
+          set({ favorites: merged, favoriteIds: buildFavoriteIds(merged) });
           await setDoc(docRef, { items: merged }, { merge: true });
         } else {
           await setDoc(docRef, { items: get().favorites }, { merge: true });
@@ -53,10 +67,11 @@ export const useFavoritesStore = create<FavoritesState>()(
       },
 
       addFavorite: async (item, userId) => {
-        const { favorites } = get();
-        if (!favorites.find((f) => f.id === item.id)) {
+        const { favorites, favoriteIds } = get();
+        if (!favoriteIds?.[item.id] && !favorites.find((f) => f.id === item.id)) {
           const newFavorites = [...favorites, item];
-          set({ favorites: newFavorites });
+          const newIds = { ...favoriteIds, [item.id]: true };
+          set({ favorites: newFavorites, favoriteIds: newIds });
 
           if (userId) {
             const docRef = doc(db, "users", userId, "userData", "watchlist");
@@ -67,7 +82,9 @@ export const useFavoritesStore = create<FavoritesState>()(
 
       removeFavorite: async (id, userId) => {
         const newFavorites = get().favorites.filter((f) => f.id !== id);
-        set({ favorites: newFavorites });
+        const newIds = { ...get().favoriteIds };
+        delete newIds[id];
+        set({ favorites: newFavorites, favoriteIds: newIds });
 
         if (userId) {
           const docRef = doc(db, "users", userId, "userData", "watchlist");
@@ -76,7 +93,11 @@ export const useFavoritesStore = create<FavoritesState>()(
       },
 
       isFavorite: (id) => {
-        return get().favorites.some((f) => f.id === id);
+        const { favoriteIds, favorites } = get();
+        if (favoriteIds && typeof favoriteIds === "object") {
+          return Boolean(favoriteIds[id]);
+        }
+        return favorites.some((f) => f.id === id);
       },
 
       toggleFavorite: async (item, userId) => {
@@ -87,11 +108,18 @@ export const useFavoritesStore = create<FavoritesState>()(
         }
       },
 
-      setFavorites: (favorites) => set({ favorites }),
+      setFavorites: (favorites = []) => {
+        set({ favorites, favoriteIds: buildFavoriteIds(favorites) });
+      },
     }),
     {
       name: "luvana-favorites",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.favorites) {
+          state.favoriteIds = buildFavoriteIds(state.favorites);
+        }
+      },
     }
   )
 );

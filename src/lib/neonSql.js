@@ -33,8 +33,12 @@ export function getNeonSql() {
   if (!url) {
     throw new Error('DATABASE_URL o NEON_DATABASE_URL requerido cuando CATALOG_PROVIDER=neon');
   }
+  const maxConns = Math.max(
+    Number(process.env.PG_MAX_CONNECTIONS || process.env.DATABASE_MAX_CONNECTIONS) || 10,
+    5
+  );
   sqlInstance = postgres(url, {
-    max: 1,
+    max: maxConns,
     idle_timeout: 20,
     connect_timeout: 30,
     prepare: false,

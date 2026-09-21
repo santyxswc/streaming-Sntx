@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, X, Send, Loader2, Play, Info, ArrowRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AISearch({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
@@ -131,7 +132,14 @@ export default function AISearch({ isOpen, onClose }) {
                     className="w-full flex flex-col md:flex-row gap-8 bg-white/5 p-6 rounded-[2rem] border border-white/10"
                   >
                     <div className="w-full md:w-1/3 aspect-[2/3] relative rounded-2xl overflow-hidden shadow-2xl group">
-                      <img src={result.image} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
+                      <Image
+                        src={result.image}
+                        alt={result.title || "Póster de producción"}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                        unoptimized
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
                     </div>
                     

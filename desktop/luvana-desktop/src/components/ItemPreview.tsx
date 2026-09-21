@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Play, Plus, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,11 +15,12 @@ interface ItemPreviewProps {
   onMouseLeave: () => void;
 }
 
-export default function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMouseLeave }: ItemPreviewProps) {
-  const { toggleFavorite, isFavorite } = useFavoritesStore();
-  const { user } = useAuthStore();
+function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMouseLeave }: ItemPreviewProps) {
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const user = useAuthStore((s) => s.user);
 
-  if (!isVisible) return null;
+  if (!isVisible || !item) return null;
 
   const detailPath = `/${item.type === "movie" ? "peliculas" : item.type === "series" ? "series" : "peliculas"}/${item.id}`;
 
@@ -34,7 +36,14 @@ export default function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMou
       style={{ left: x, top: y }}
     >
       <div className="relative aspect-video">
-        <img src={item.backdrop || item.image} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt="" />
+        <img
+          src={item.backdrop || item.image}
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-transparent" />
       </div>
       <div className="p-4 space-y-4">
@@ -68,3 +77,5 @@ export default function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMou
     </motion.div>
   );
 }
+
+export default memo(ItemPreview);

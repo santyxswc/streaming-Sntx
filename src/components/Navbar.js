@@ -26,8 +26,10 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const profileRef = useRef(null);
   const router = useRouter();
-  const { user, logout, initAuth } = useAuthStore();
-  const { syncWithFirestore } = useFavoritesStore();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const initAuth = useAuthStore((s) => s.initAuth);
+  const syncWithFirestore = useFavoritesStore((s) => s.syncWithFirestore);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

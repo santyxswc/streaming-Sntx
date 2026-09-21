@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Play, Info, Volume2, VolumeX } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,7 @@ const Banner = ({ movie }) => {
       return () => clearTimeout(timer);
     }
     queueMicrotask(() => setIsPlaying(false));
-  }, [movie]);
+  }, [movie?.id, movie?.trailer]);
 
   if (!movie) return <div className="h-[80vh] bg-background" />;
 
@@ -142,4 +142,4 @@ const Banner = ({ movie }) => {
   );
 };
 
-export default Banner;
+export default memo(Banner);

@@ -132,8 +132,12 @@ export const searchCatalog = async (qStr) => {
   const phrase = qStr.toLowerCase().trim();
   const scored = [];
 
-  for (const col of ["movies", "series"]) {
-    const snapshot = await adminDb.collection(col).get();
+  const snapshots = await Promise.all([
+    adminDb.collection("movies").get(),
+    adminDb.collection("series").get(),
+  ]);
+
+  for (const snapshot of snapshots) {
     const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     for (const item of items) {
@@ -204,29 +208,40 @@ export const getRecommendationsForItem = async (item, count = 60) => {
 export const findMediaForAiLookup = async (collectionName, titlesToTry) => {
   const adminDb = getCatalogDb();
   const col = adminDb.collection(collectionName);
+  const validTitles = (titlesToTry || []).filter(Boolean);
+  if (!validTitles.length) return { winner: null, winnerId: null };
 
-  for (const title of titlesToTry) {
-    if (!title) continue;
+  const slugEntries = validTitles.map((title) => {
     const slug = title
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/ /g, "-")
       .replace(/[^\w-]/g, "");
-    const docSnap = await col.doc(slug).get();
+    return { title, slug };
+  });
+
+  // 1. Consultar todos los slugs en paralelo
+  const slugDocs = await Promise.all(
+    slugEntries.map(({ slug }) => col.doc(slug).get())
+  );
+  for (let i = 0; i < slugDocs.length; i++) {
+    const docSnap = slugDocs[i];
     if (docSnap.exists) {
       return { winner: docSnap.data(), winnerId: docSnap.id };
     }
   }
 
-  for (const title of titlesToTry) {
-    if (!title) continue;
-    const q1 = await col.where("title", "==", title).limit(1).get();
+  // 2. Búsqueda por title / originalTitle
+  for (const title of validTitles) {
+    const [q1, q2] = await Promise.all([
+      col.where("title", "==", title).limit(1).get(),
+      col.where("originalTitle", "==", title).limit(1).get(),
+    ]);
     if (!q1.empty) {
       const d = q1.docs[0];
       return { winner: d.data(), winnerId: d.id };
     }
-    const q2 = await col.where("originalTitle", "==", title).limit(1).get();
     if (!q2.empty) {
       const d = q2.docs[0];
       return { winner: d.data(), winnerId: d.id };

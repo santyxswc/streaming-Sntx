@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -11,7 +11,7 @@ interface MovieCardProps {
   isGrid?: boolean;
 }
 
-function MovieCard({ item, isGrid = false }: MovieCardProps) {
+const MovieCard = memo(function MovieCard({ item, isGrid = false }: MovieCardProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,6 +60,8 @@ function MovieCard({ item, isGrid = false }: MovieCardProps) {
             <img
               src={item.image}
               alt={item.title || ""}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover transition-premium filter brightness-90 group-hover:brightness-100"
               referrerPolicy="no-referrer"
             />
@@ -90,7 +92,7 @@ function MovieCard({ item, isGrid = false }: MovieCardProps) {
       </AnimatePresence>
     </>
   );
-}
+});
 
 interface MovieRowProps {
   title: string;
@@ -98,7 +100,7 @@ interface MovieRowProps {
   listingType?: string;
 }
 
-export default function MovieRow({ title, items, listingType }: MovieRowProps) {
+function MovieRowComponent({ title, items, listingType }: MovieRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [isMoved, setIsMoved] = useState(false);
 
@@ -145,4 +147,9 @@ export default function MovieRow({ title, items, listingType }: MovieRowProps) {
   );
 }
 
+const MovieRow = memo(MovieRowComponent) as unknown as typeof MovieRowComponent & {
+  Card: typeof MovieCard;
+};
 MovieRow.Card = MovieCard;
+
+export default MovieRow;

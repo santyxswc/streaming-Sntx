@@ -120,8 +120,10 @@ export async function POST(request) {
       );
 
       if (newItems.length) {
-        await saveMediaBatch(newItems);
-        await updateFilterMetadata(type, newItems);
+        await Promise.all([
+          saveMediaBatch(newItems),
+          updateFilterMetadata(type, newItems),
+        ]);
         totalScraped += newItems.length;
 
         if (sampleItems.length < 20) {

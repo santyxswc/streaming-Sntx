@@ -1,4 +1,6 @@
 'use client';
+import { memo } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X as CloseIcon, Coffee } from 'lucide-react';
 
@@ -8,7 +10,7 @@ const CAFECITO_BUTTON_IMGS = {
   high: 'https://cdn.cafecito.app/imgs/buttons/button_5_3.75x.png',
 };
 
-export default function DonateModal({ isOpen, onClose, cafecitoUsername }) {
+function DonateModal({ isOpen, onClose, cafecitoUsername }) {
   if (!isOpen || !cafecitoUsername) return null;
 
   const cafecitoUrl = `https://cafecito.app/${cafecitoUsername}`;
@@ -59,11 +61,13 @@ export default function DonateModal({ isOpen, onClose, cafecitoUsername }) {
                 rel="noopener noreferrer"
                 className="transition-transform hover:scale-105 active:scale-95"
               >
-                <img
-                  srcSet={`${CAFECITO_BUTTON_IMGS.default} 1x, ${CAFECITO_BUTTON_IMGS.retina} 2x, ${CAFECITO_BUTTON_IMGS.high} 3.75x`}
+                <Image
                   src={CAFECITO_BUTTON_IMGS.default}
                   alt="Invitame un café en cafecito.app"
+                  width={192}
+                  height={40}
                   className="h-auto w-auto max-w-full"
+                  unoptimized
                 />
               </a>
             </div>
@@ -83,3 +87,5 @@ export default function DonateModal({ isOpen, onClose, cafecitoUsername }) {
     </AnimatePresence>
   );
 }
+
+export default memo(DonateModal);

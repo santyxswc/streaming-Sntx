@@ -156,7 +156,10 @@ export async function POST(req) {
   }
 
   try {
-    const exists = await mediaExists(mediaId);
+    const [exists, profile] = await Promise.all([
+      mediaExists(mediaId),
+      getOrCreateProfile(uid),
+    ]);
     if (!exists) {
       return NextResponse.json(
         { success: false, error: 'Contenido no encontrado' },
@@ -164,7 +167,7 @@ export async function POST(req) {
       );
     }
 
-    const { chatName: authorDisplayName } = await getOrCreateProfile(uid);
+    const authorDisplayName = profile.chatName;
 
     const message = await appendMessage({
       mediaId,
