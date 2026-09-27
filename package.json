@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "migrate:genres": "node scripts/migrate-genre-labels.mjs",
     "ingest:tmdb": "node scripts/ingest-tmdb.mjs",
     "ingest:tmdb:movie:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=movie node scripts/ingest-tmdb.mjs",
@@ -38,6 +40,7 @@
     "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "vitest": "^5.0.2"
   }
 }
