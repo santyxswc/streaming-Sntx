@@ -1,5 +1,7 @@
 # streaming-Sntx
 
+[![CI](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml)
+
 Catálogo cinematográfico de **más de 100.000 películas y series** para descubrir títulos a través de sus **tráilers oficiales**, con búsqueda en lenguaje natural asistida por IA, recomendaciones, listas personales y chat por título. Incluye una app web (Next.js) y un cliente de escritorio (Tauri) que consumen la misma API.
 
 > streaming-Sntx no aloja ni enlaza contenido protegido: solo reproduce tráilers públicos de YouTube a través del reproductor embebido oficial.
@@ -9,7 +11,7 @@ Catálogo cinematográfico de **más de 100.000 películas y series** para descu
 - **Tráilers oficiales**: cada título resuelve sus tráilers bajo demanda contra TMDB (preferencia: oficial en español → inglés → otros), con selector de versión y modo cine.
 - **Catálogo de +113k títulos** en PostgreSQL (Neon), ingerido desde TMDB y TVmaze, con filtros por género, año y país, paginación por cursor y búsqueda tolerante a acentos.
 - **Búsqueda con IA**: describe una escena, actor o época y el asistente (DeepSeek) identifica el título y lo cruza con el catálogo.
-- **Tendencias** basadas en las vistas del propio catálogo, con estrenos populares como respaldo.
+- **Portadas curadas**: inicio, películas y series muestran solo títulos populares (rankings de TMDB por tendencia, votos y popularidad) que existen en el catálogo y tienen tráiler, sin repetir títulos entre filas.
 - **Mi lista** sincronizada en Firestore para usuarios autenticados (Firebase Auth).
 - **Chat por título** con moderación, nombres de usuario generados y límites de uso.
 - **Cliente de escritorio** (Tauri + Vite + React + TypeScript).
@@ -37,12 +39,14 @@ flowchart LR
     Desktop[Escritorio · Tauri]
   end
   subgraph api [src/app/api · Route Handlers]
+    Feed["/api/feed/:page"]
     Media["/api/media/*"]
     Trailer["/api/media/trailer"]
     AI["/api/ai/search"]
     Chat["/api/chat/*"]
   end
   subgraph server [src/server]
+    FeedSvc[feedService]
     CatalogRepo[catalogRepository]
     TrailerSvc[trailerService]
     ChatRepo[chatRepository]
@@ -52,8 +56,9 @@ flowchart LR
     Neon[(Neon PostgreSQL)]
     Firestore[(Firestore)]
   end
-  Web --> Media & Trailer & AI & Chat
-  Desktop --> Media & Trailer
+  Web --> Feed & Media & Trailer & AI & Chat
+  Desktop --> Feed & Media & Trailer
+  Feed --> FeedSvc --> CatalogRepo & TrailerSvc & Integrations
   Media --> CatalogRepo
   AI --> CatalogRepo & Integrations
   Trailer --> TrailerSvc --> CatalogRepo & Integrations
@@ -79,12 +84,16 @@ src/
 ├── server/              Solo servidor (protegido con `server-only`)
 │   ├── catalog/         Repositorio + proveedores neon / firebase / tmdb / demo
 │   ├── chat/            Repositorio + proveedores, autorización de moderación
+│   ├── feed/            Portadas curadas: secciones declarativas, fuentes y servicio
 │   ├── trailers/        Resolución y caché de tráilers
-│   ├── integrations/    Clientes TMDB, OMDb, DeepSeek
+│   ├── episodes/        Temporadas y episodios (resolvedores TMDB / TVmaze / demo)
+│   ├── integrations/    Clientes TMDB, TVmaze, OMDb, DeepSeek
 │   ├── db/              Clientes Postgres y Firebase Admin
-│   ├── http/            Rate limiting
+│   ├── http/            withApiHandler (rate limit, caché, errores) y rate limiting
+│   ├── shared/          Caché TTL y limitador de concurrencia
 │   └── config/          Selección de proveedores por entorno
-└── lib/                 Utilidades isomórficas (youtube, géneros, firebase cliente)
+└── lib/                 Utilidades isomórficas (youtube, rutas, géneros, firebase cliente)
+tests/unit/              Tests de servicios, contratos de proveedores y capa HTTP (Vitest)
 db/migrations/           Esquema SQL e índices de Neon
 scripts/                 Ingesta (TMDB, TVmaze), migraciones y utilidades
 desktop/                 Cliente de escritorio Tauri
@@ -96,7 +105,18 @@ docs/                    Guías de Neon, Firebase y moderación
 - **Repositorios con proveedores intercambiables**: las rutas solo conocen `catalogRepository` / `chatRepository`; el backend concreto (Neon, Firestore, TMDB en vivo o datos demo) se elige con `CATALOG_PROVIDER` / `CHAT_PROVIDER`. El proyecto arranca sin ninguna credencial en modo `demo`.
 - **Límite cliente/servidor explícito**: cada módulo de `src/server/` importa `server-only`, así que importarlo desde un componente de cliente rompe el build en lugar de filtrar secretos al navegador.
 - **Tráilers sin escribir en la base**: solo ~7% del catálogo trae el tráiler guardado. `trailerService` lo resuelve con el mejor identificador disponible (id TMDB → IMDb/TheTVDB del payload de ingesta → búsqueda por título y año), lo cachea en memoria (TTL corto para resultados vacíos) y en el CDN vía `Cache-Control`.
+- **Portadas curadas sin tocar la base**: `feedService` combina tres fuentes independientes: rankings de popularidad de TMDB (qué es *mainstream*), el catálogo (solo se muestra lo que existe en la BD) y el servicio de tráilers (solo títulos con tráiler). Las filas se definen de forma declarativa en `feedSections.js`, cada título aparece una sola vez por página y el resultado se cachea una hora en memoria y en el CDN.
 - **Protección de la API**: rate limiting por IP y endpoint, verificación de ID tokens de Firebase en servidor y CSP que solo permite iframes de YouTube y Firebase Auth.
+
+### Principios SOLID aplicados
+
+| Principio | Dónde |
+|-----------|-------|
+| **S**RP | Las rutas solo traducen HTTP: `withApiHandler` concentra rate limit, caché y errores; la lógica vive en servicios (`feedService`, `trailerService`, `episodeService`). |
+| **O**CP | Añadir una fila del feed es configuración (`feedSections.js`); una fuente de episodios, un resolvedor más; un proveedor de catálogo, una entrada en `CATALOG_PROVIDERS`. |
+| **L**SP | Todos los proveedores de catálogo y chat cumplen el mismo contrato, verificado por `tests/unit/contracts.test.js`. |
+| **I**SP | El chat separa el contrato de mensajes del de perfiles; los servicios dependen solo de las funciones que usan (`{ getMediaByIds }`, `{ getTrailersForItem }`). |
+| **D**IP | Los servicios se construyen con factorías (`createFeedService`, `createTrailerService`, `createEpisodeService`) que reciben sus dependencias; los tests inyectan dobles sin red ni base de datos. |
 
 ## Puesta en marcha
 
@@ -153,6 +173,7 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` / `npm start` | Build y servidor de producción |
 | `npm run lint` | ESLint |
+| `npm test` | Tests unitarios (Vitest) |
 | `npm run migrate:neon` | Migraciones SQL |
 | `npm run ingest:tmdb` | Ingesta desde TMDB (variantes `:movie:full`, `:series:full`, `:es:full`) |
 | `npm run ingest:tvmaze` | Ingesta de series desde TVmaze (`:full` para el catálogo completo) |
@@ -161,7 +182,8 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 
 | Endpoint | Descripción |
 |----------|-------------|
-| `GET /api/media` | Listado paginado con filtros y orden |
+| `GET /api/feed/:page` | Portada curada (`home`, `movies`, `series`): destacados y filas |
+| `GET /api/media` | Listado paginado con filtros y orden (máx. 100 por página) |
 | `GET /api/media/detail` | Ficha de un título |
 | `GET /api/media/trailer` | Tráilers de YouTube de un título |
 | `GET /api/media/episodes` | Temporadas y episodios de una serie |

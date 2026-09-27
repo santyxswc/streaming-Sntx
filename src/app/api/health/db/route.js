@@ -12,7 +12,7 @@ export async function GET() {
   const catalog = getCatalogProvider();
   if (catalog !== 'neon') {
     return NextResponse.json(
-      { ok: true, catalog: 'firebase', db: 'skipped' },
+      { ok: true, catalog, db: 'skipped' },
       { status: 200 }
     );
   }
