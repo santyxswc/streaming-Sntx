@@ -130,8 +130,8 @@ export default function Navbar() {
         >
           <Menu size={24} />
         </button>
-        <Link to="/" className="text-[var(--primary)] text-2xl md:text-3xl font-bold tracking-tighter uppercase" onClick={() => setMobileMenuOpen(false)}>
-          Luvana
+        <Link to="/" className="text-[var(--primary)] text-2xl md:text-3xl font-bold tracking-tighter" onClick={() => setMobileMenuOpen(false)}>
+          streaming<span className="text-white">-Sntx</span>
         </Link>
         <div className="hidden lg:flex items-center gap-5 text-sm text-gray-200">
           <Link to="/" className="hover:text-white transition-premium">

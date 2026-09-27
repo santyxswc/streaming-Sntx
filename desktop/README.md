@@ -42,7 +42,7 @@ npm run tauri build  # App completa para Windows
 ```
 
 Los binarios se generan en `src-tauri/target/release/`:
-- `luvana-desktop.exe` - Ejecutable
+- `streaming-sntx-desktop.exe` - Ejecutable
 - `streaming-Sntx_0.1.0_x64_en-US.msi` - Instalador
 
 ## Estructura

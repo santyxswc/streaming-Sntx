@@ -113,7 +113,7 @@ export const useFavoritesStore = create<FavoritesState>()(
       },
     }),
     {
-      name: "luvana-favorites",
+      name: "sntx-favorites",
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state && state.favorites) {

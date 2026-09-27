@@ -65,7 +65,7 @@ export const useMovieStore = create<MovieStoreState>()(
       },
     }),
     {
-      name: "luvana-movies",
+      name: "sntx-movies",
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         movies: state.movies,

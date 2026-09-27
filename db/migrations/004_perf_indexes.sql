@@ -1,4 +1,4 @@
--- Índices de rendimiento para Luvana (Neon / PostgreSQL)
+-- Índices de rendimiento para streaming-Sntx (Neon / PostgreSQL)
 -- Optimiza consultas frecuentes: búsqueda por título/original_title, orden por rating,
 -- feed global de moderación en chat y cálculo de tendencias por vistas.
 -- Ejecutar: npm run migrate:neon

@@ -41,7 +41,7 @@ export async function POST(request) {
     const apiKey = request.headers.get('x-api-key');
     const isDev = process.env.NODE_ENV === 'development';
     const secretKey =
-      process.env.SCRAPE_SECRET_KEY || (isDev ? 'luv-dev-secret-123' : null);
+      process.env.SCRAPE_SECRET_KEY || (isDev ? 'dev-ingest-secret' : null);
     if (!secretKey) {
       return NextResponse.json(
         { success: false, error: 'SCRAPE_SECRET_KEY no configurada' },

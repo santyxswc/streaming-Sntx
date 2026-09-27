@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "https://luvana.pro";
+const API_BASE = import.meta.env.VITE_API_URL || "https://streaming-sntx.vercel.app";
 
 export interface MediaParams {
   type?: "movie" | "series";

@@ -1,4 +1,4 @@
--- Catálogo Luvana en Neon (PostgreSQL)
+-- Catálogo streaming-Sntx en Neon (PostgreSQL)
 -- Ejecutar: npm run migrate:neon   (o psql $DATABASE_URL -f ... si tienes psql instalado)
 
 CREATE TABLE IF NOT EXISTS media (

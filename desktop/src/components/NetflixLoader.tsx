@@ -24,9 +24,9 @@ export default function NetflixLoader({ fullScreen = true, message = "Iniciando 
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: [0.8, 1.1, 1], opacity: 1 }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          className="relative text-[var(--primary)] text-7xl md:text-9xl font-black tracking-tighter uppercase select-none"
+          className="relative text-[var(--primary)] text-6xl md:text-8xl font-black tracking-tighter select-none"
         >
-          Luvana
+          streaming<span className="text-white">-Sntx</span>
           <motion.div
             animate={{ x: ["-100%", "200%"] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.5 }}

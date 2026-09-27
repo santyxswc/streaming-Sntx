@@ -21,7 +21,7 @@ dist/
 firebase-adminsdk*.json
 *.pem
 *.key
-!desktop/luvana-desktop/src-tauri/icons/*.key
+!desktop/src-tauri/icons/*.key
 
 # Logs
 npm-debug.log*

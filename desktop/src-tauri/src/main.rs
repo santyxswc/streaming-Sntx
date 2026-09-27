@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    luvana_desktop_lib::run()
+    streaming_sntx_desktop_lib::run()
 }

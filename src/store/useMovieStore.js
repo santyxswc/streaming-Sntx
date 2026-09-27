@@ -48,7 +48,7 @@ export const useMovieStore = create(
       },
     }),
     {
-      name: 'luvana-movies',
+      name: 'sntx-movies',
       storage: createJSONStorage(() =>
         typeof window !== 'undefined'
           ? sessionStorage
