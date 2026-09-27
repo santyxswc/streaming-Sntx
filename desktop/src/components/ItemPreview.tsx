@@ -37,7 +37,7 @@ function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMouseLeave }: Item
     >
       <div className="relative aspect-video">
         <img
-          src={item.backdrop || item.image}
+          src={(item.backdrop || item.image) as string | undefined}
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
           alt=""

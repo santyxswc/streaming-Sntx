@@ -1,51 +1,23 @@
-import { useEffect, useState } from "react";
 import Banner from "@/components/Banner";
-import MovieRow from "@/components/MovieRow";
+import FeedRows from "@/components/FeedRows";
 import PageLoader from "@/components/PageLoader";
-import { useMovieStore } from "@/store/useMovieStore";
-import { api } from "@/config/api";
+import { useFeed } from "@/hooks/useFeed";
 
 export default function PeliculasPage() {
-  const { movies, setMovies, setCachedAt, isMoviesCacheValid } = useMovieStore();
-  const [loading, setLoading] = useState(true);
+  const { sections, featured, loading, error } = useFeed("movies");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(api.media({ type: "movie", count: 60 }));
-        const data = await res.json();
-        if (data.success) {
-          setMovies(data.data);
-          setCachedAt(Date.now());
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const run = async () => {
-      if (isMoviesCacheValid()) {
-        setLoading(false);
-        return;
-      }
-      await fetchData();
-    };
-
-    const timer = setTimeout(run, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading && movies.length === 0) return <PageLoader />;
+  if (loading) return <PageLoader />;
 
   return (
-    <div className="relative min-h-screen bg-[var(--background)]">
+    <div className="relative min-h-screen bg-[var(--background)] overflow-x-hidden">
       <div className="relative pb-24 pt-20">
-        <Banner movie={movies[0] || null} />
+        <Banner movie={featured} />
         <div className="space-y-8 -mt-24 md:-mt-32 relative z-10">
-          <MovieRow title="Todas las Películas" items={movies} listingType="peliculas" />
-          <MovieRow title="Acción y Suspenso" items={[...movies].reverse()} listingType="peliculas" />
+          {error ? (
+            <p className="px-4 md:px-12 text-center text-gray-400">No se pudo cargar el catálogo. Inténtalo de nuevo.</p>
+          ) : (
+            <FeedRows sections={sections} />
+          )}
         </div>
       </div>
     </div>

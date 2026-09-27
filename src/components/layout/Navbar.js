@@ -16,6 +16,7 @@ import DonateButton from '@/features/donations/components/DonateButton';
 import { useFavoritesStore } from '@/features/favorites/store/useFavoritesStore';
 
 import { ALL_GENRES } from '@/lib/genreMap';
+import { detailPath } from '@/lib/media';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -223,7 +224,7 @@ const Navbar = () => {
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Resultados rápidos</span>
                       </div>
                                   {searchResults.map(item => (
-                        <Link key={item.id} href={`/${item.type === 'movie' ? 'peliculas' : 'series'}/${item.id}`} onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
+                        <Link key={item.id} href={detailPath(item)} onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
                           <div className="flex gap-4 group cursor-pointer hover:bg-white/5 p-3 rounded-xl transition-all duration-300 border border-transparent hover:border-white/5">
                             <div className="relative w-16 h-24 shrink-0 overflow-hidden rounded-lg shadow-2xl">
                               <MediaImage src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

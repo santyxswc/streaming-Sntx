@@ -1,5 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || "https://streaming-sntx.vercel.app";
 
+export type FeedPageId = "home" | "movies" | "series";
+
 export interface MediaParams {
   type?: "movie" | "series";
   count?: number;
@@ -29,6 +31,8 @@ export const api = {
     if (params.country) searchParams.set("country", params.country);
     return `${API_BASE}/api/media?${searchParams.toString()}`;
   },
+
+  feed: (page: FeedPageId) => `${API_BASE}/api/feed/${page}`,
 
   detail: (type: string, slug: string) =>
     `${API_BASE}/api/media/detail?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`,

@@ -84,10 +84,12 @@ function Banner({ movie }: BannerProps) {
             transition={{ delay: 0.2 }}
             className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-[var(--primary)]"
           >
-            <span className="bg-[var(--primary)]/20 border border-[var(--primary)]/30 px-2 py-0.5 rounded">Top 10 Global</span>
-            <span className="text-white bg-white/10 px-2 py-0.5 rounded">Original</span>
+            <span className="bg-[var(--primary)]/20 border border-[var(--primary)]/30 px-2 py-0.5 rounded">
+              {movie.type === "series" ? "Serie" : "Película"}
+            </span>
+            {movie.year && <span className="text-white bg-white/10 px-2 py-0.5 rounded">{String(movie.year)}</span>}
           </motion.div>
-          {movie.overview && (
+          {typeof movie.overview === "string" && movie.overview && (
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

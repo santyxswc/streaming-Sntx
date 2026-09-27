@@ -2,6 +2,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Plus, Check, ChevronDown } from 'lucide-react';
+import { detailPath } from '@/lib/media';
 import { useFavoritesStore } from '@/features/favorites/store/useFavoritesStore';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import Link from 'next/link';
@@ -14,7 +15,7 @@ const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
 
   if (!isVisible || !item) return null;
 
-  const detailUrl = `/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`;
+  const detailUrl = detailPath(item);
 
   return (
     <motion.div

@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import { ChevronLeft, ChevronRight, Play, Plus, Check, Star } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { detailPath } from '@/lib/media';
 import Link from 'next/link';
 import ItemPreview from '@/features/catalog/components/ItemPreview';
 import MediaImage from '@/components/ui/MediaImage';
@@ -65,7 +66,7 @@ const MovieCard = memo(({ item, isGrid = false, rank }) => {
     setShowPreview(false);
   };
 
-  const detailLink = `/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`;
+  const detailLink = detailPath(item);
   const primaryGenre = Array.isArray(item.genres) ? item.genres[0] : null;
   const ratingValue = parseFloat(item.rating);
   const hasRating = Number.isFinite(ratingValue) && ratingValue > 0;

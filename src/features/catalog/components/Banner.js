@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFavoritesStore } from '@/features/favorites/store/useFavoritesStore';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { parseYoutubeId, youtubeEmbedUrl } from '@/lib/youtube';
+import { detailPath } from '@/lib/media';
 
 const Banner = ({ movie }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -23,11 +25,8 @@ const Banner = ({ movie }) => {
 
   if (!movie) return <div className="h-[80vh] bg-background" />;
 
-  const trailerId = movie.trailer?.includes('v=') 
-    ? movie.trailer.split('v=')[1]?.split('&')[0] 
-    : movie.trailer?.split('/').pop();
-
-  const detailUrl = `/${movie.type === 'movie' ? 'peliculas' : movie.type === 'series' ? 'series' : 'anime'}/${movie.id}`;
+  const trailerId = parseYoutubeId(movie.trailer);
+  const detailUrl = detailPath(movie);
   const primaryGenre = Array.isArray(movie.genres) ? movie.genres[0] : null;
   const ratingValue = parseFloat(movie.rating);
   const hasRating = Number.isFinite(ratingValue) && ratingValue > 0;
@@ -48,7 +47,7 @@ const Banner = ({ movie }) => {
             >
               <div className="relative w-full h-full flex items-center justify-center">
                  <iframe
-                  src={`https://www.youtube.com/embed/${trailerId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=${trailerId}&auto_play=1&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1`}
+                  src={youtubeEmbedUrl(trailerId, { autoplay: 1, mute: isMuted ? 1 : 0, controls: 0, loop: 1, playlist: trailerId, iv_load_policy: 3 })}
                   className="absolute w-[177.77vh] h-full min-w-full min-h-[56.25vw] pointer-events-none brightness-[0.7] transform scale-110"
                   allow="autoplay; encrypted-media"
                 />

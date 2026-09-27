@@ -1,4 +1,5 @@
-import { api, type MediaParams } from "@/config/api";
+import { api, type MediaParams, type FeedPageId } from "@/config/api";
+import type { MediaItem } from "@/store/useFavoritesStore";
 
 export async function fetchMedia(params: MediaParams = {}) {
   const res = await fetch(api.media(params));
@@ -54,4 +55,25 @@ export async function checkAuthLimit() {
   const res = await fetch(api.authLimit(), { method: "POST" });
   const data = await res.json();
   return data.success;
+}
+
+export interface FeedSection {
+  id: string;
+  title: string;
+  type: "movie" | "series";
+  ranked: boolean;
+  items: MediaItem[];
+}
+
+export interface Feed {
+  featured: MediaItem[];
+  sections: FeedSection[];
+  generatedAt: string;
+}
+
+export async function fetchFeed(page: FeedPageId): Promise<Feed> {
+  const res = await fetch(api.feed(page));
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || "Failed to fetch feed");
+  return data.data;
 }
