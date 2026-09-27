@@ -1,0 +1,9 @@
+# Variables locales: en Vercel se configuran en el proyecto
+.env
+.env.*
+!.env.example
+
+# No forman parte de la web
+desktop/
+Ejemplos de front/
+tests/
