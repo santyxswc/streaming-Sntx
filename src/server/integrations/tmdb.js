@@ -162,6 +162,32 @@ export async function getTmdbGenreMap(mediaType = "movie") {
 }
 
 /**
+ * Página de cualquier listado TMDB tipado (discover, trending, top_rated...)
+ * con géneros resueltos a nombres y señales de popularidad.
+ * @param {'movie'|'series'} mediaType
+ * @param {string} path  p. ej. `/trending/movie/week` o `/discover/tv`
+ */
+export async function getTmdbMediaList(mediaType, path, params = {}) {
+  const [data, genreMap] = await Promise.all([
+    tmdbFetch(path, { include_adult: "false", ...params }),
+    getTmdbGenreMap(mediaType),
+  ]);
+  if (!data) return { items: [], totalPages: 0, totalResults: 0 };
+
+  const items = (data.results || []).map((r) => ({
+    ...mapTmdbToMedia(r, mediaType),
+    genres: (r.genre_ids || []).map((id) => genreMap[String(id)]).filter(Boolean),
+    voteCount: r.vote_count || 0,
+    popularity: r.popularity || 0,
+  }));
+  return {
+    items,
+    totalPages: data.total_pages || 0,
+    totalResults: data.total_results || 0,
+  };
+}
+
+/**
  * Discover con filtros + metadata de paginación real de TMDB, y géneros
  * resueltos a nombres (no ids), listo para persistir con saveMediaBatch.
  */
@@ -170,11 +196,7 @@ export async function discoverTmdbPage(
   { sortBy = "popularity.desc", page = 1, year, genre, originalLanguage } = {}
 ) {
   const type = mediaType === "series" ? "tv" : "movie";
-  const params = {
-    sort_by: sortBy,
-    page: String(page),
-    include_adult: "false",
-  };
+  const params = { sort_by: sortBy, page: String(page) };
   if (year) {
     params[type === "movie" ? "primary_release_year" : "first_air_date_year"] =
       String(year);
@@ -182,24 +204,14 @@ export async function discoverTmdbPage(
   if (genre) params.with_genres = String(genre);
   if (originalLanguage) params.with_original_language = String(originalLanguage);
 
-  const [data, genreMap] = await Promise.all([
-    tmdbFetch(`/discover/${type}`, params),
-    getTmdbGenreMap(mediaType),
-  ]);
-  if (!data) return { items: [], totalPages: 0, totalResults: 0 };
-  const items = (data.results || []).map((r) => {
-    const mapped = mapTmdbToMedia(r, mediaType);
-    mapped.genres = (r.genre_ids || [])
-      .map((id) => genreMap[String(id)])
-      .filter(Boolean);
-    return mapped;
-  });
-
-  return {
-    items,
-    totalPages: data.total_pages || 0,
-    totalResults: data.total_results || 0,
-  };
+  const { items, totalPages, totalResults } = await getTmdbMediaList(
+    mediaType,
+    `/discover/${type}`,
+    params
+  );
+  // La ingesta persiste la forma del catálogo, sin las señales de ranking.
+  const catalogItems = items.map(({ voteCount, popularity, ...item }) => item);
+  return { items: catalogItems, totalPages, totalResults };
 }
 
 function extractTrailerKey(videos) {

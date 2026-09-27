@@ -10,10 +10,8 @@ import {
   getTrending,
   discoverTmdb,
   isTmdbConfigured,
+  getTmdbMedia,
 } from "@/server/integrations/tmdb";
-
-/** No hay db en modo TMDB. */
-export const db = null;
 
 export const saveMediaBatch = async () => {
   // No-op: TMDB es solo lectura
@@ -76,6 +74,16 @@ export const getMediaBySlug = async (type, slug) => {
   const title = slug.replace(/-/g, " ");
   const results = await searchTmdb(title);
   return results.find((r) => r.id === slug || r.id === `tmdb-${slug}`) || results[0] || null;
+};
+
+/** En modo TMDB el catálogo es TMDB: cada `tmdb-<id>` existe si TMDB lo devuelve. */
+export const getMediaByIds = async (type, ids) => {
+  if (!isTmdbConfigured() || !ids?.length) return [];
+  const numericIds = ids
+    .map((id) => /^tmdb-(\d+)$/.exec(id)?.[1])
+    .filter(Boolean);
+  const items = await Promise.all(numericIds.map((id) => getTmdbMedia(type, id)));
+  return items.filter(Boolean);
 };
 
 export const searchCatalog = async (qStr) => {

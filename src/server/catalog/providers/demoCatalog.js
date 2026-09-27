@@ -491,9 +491,6 @@ function sortItems(items, sortField, sortOrder) {
 
 // --- Exported API (misma firma que firebaseCatalog.js) ---
 
-/** Re-export client db para compatibilidad (null en modo demo). */
-export const db = null;
-
 export const saveMediaBatch = async () => {
   // No-op en modo demo
 };
@@ -554,6 +551,12 @@ export const getMediaBySlug = async (type, slug) => {
       ? DEMO_SERIES
       : DEMO_MOVIES;
   return items.find((i) => i.id === slug) || null;
+};
+
+export const getMediaByIds = async (type, ids) => {
+  const items = type === "series" ? DEMO_SERIES : DEMO_MOVIES;
+  const wanted = new Set(ids);
+  return items.filter((i) => wanted.has(i.id));
 };
 
 export const searchCatalog = async (qStr) => {

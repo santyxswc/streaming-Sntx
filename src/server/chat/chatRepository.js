@@ -5,21 +5,26 @@ import * as firestoreChat from '@/server/chat/providers/firestoreChat';
 import * as neonChatProfile from '@/server/chat/providers/neonChatProfile';
 import * as firestoreChatProfile from '@/server/chat/providers/firestoreChatProfile';
 
-function impl() {
-  return getChatProvider() === 'firebase' ? firestoreChat : neonChat;
-}
+/**
+ * Repositorio del chat. Mensajes y perfiles son contratos separados (ISP):
+ * una ruta que solo lista mensajes no depende de la gestión de perfiles.
+ */
+export const CHAT_PROVIDERS = {
+  neon: { messages: neonChat, profiles: neonChatProfile },
+  firebase: { messages: firestoreChat, profiles: firestoreChatProfile },
+};
 
-function profileImpl() {
-  return getChatProvider() === 'firebase' ? firestoreChatProfile : neonChatProfile;
-}
+export const MESSAGES_CONTRACT = ['mediaExists', 'listMessages', 'appendMessage', 'listGlobalFeed'];
+export const PROFILES_CONTRACT = ['getOrCreateProfile', 'updateChatName', 'isChatNameAvailable'];
 
-export const mediaExists = (...args) => impl().mediaExists(...args);
-export const listMessages = (...args) => impl().listMessages(...args);
-export const appendMessage = (...args) => impl().appendMessage(...args);
-export const listGlobalFeed = (...args) => impl().listGlobalFeed(...args);
+const messages = () => CHAT_PROVIDERS[getChatProvider()].messages;
+const profiles = () => CHAT_PROVIDERS[getChatProvider()].profiles;
 
-export const getOrCreateProfile = (...args) =>
-  profileImpl().getOrCreateProfile(...args);
-export const updateChatName = (...args) => profileImpl().updateChatName(...args);
-export const isChatNameAvailable = (...args) =>
-  profileImpl().isChatNameAvailable(...args);
+export const mediaExists = (...args) => messages().mediaExists(...args);
+export const listMessages = (...args) => messages().listMessages(...args);
+export const appendMessage = (...args) => messages().appendMessage(...args);
+export const listGlobalFeed = (...args) => messages().listGlobalFeed(...args);
+
+export const getOrCreateProfile = (...args) => profiles().getOrCreateProfile(...args);
+export const updateChatName = (...args) => profiles().updateChatName(...args);
+export const isChatNameAvailable = (...args) => profiles().isChatNameAvailable(...args);

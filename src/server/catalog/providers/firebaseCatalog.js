@@ -1,9 +1,5 @@
 import 'server-only';
-import { db } from "@/lib/firebase";
 import { getAdminFirestore } from "@/server/db/firebaseAdmin";
-
-/** Re-export client db para uso en cliente (favoritos, party, etc.). */
-export { db };
 
 /** Firestore Admin para operaciones de catálogo en el servidor (bypasea reglas). */
 function getCatalogDb() {
@@ -98,6 +94,23 @@ export const getMediaBySlug = async (type, slug) => {
   if (snapshot.empty) return null;
   const d = snapshot.docs[0];
   return { id: d.id, ...d.data() };
+};
+
+// Firestore limita los filtros `in` a 30 valores por consulta.
+const IN_QUERY_LIMIT = 30;
+
+export const getMediaByIds = async (type, ids) => {
+  if (!ids?.length) return [];
+  const adminDb = getCatalogDb();
+  const collectionName = type === 'series' ? 'series' : 'movies';
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += IN_QUERY_LIMIT) {
+    chunks.push(ids.slice(i, i + IN_QUERY_LIMIT));
+  }
+  const snapshots = await Promise.all(
+    chunks.map((chunk) => adminDb.collection(collectionName).where('id', 'in', chunk).get())
+  );
+  return snapshots.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() })));
 };
 
 function escapeRegex(s) {

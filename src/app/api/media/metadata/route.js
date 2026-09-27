@@ -1,28 +1,10 @@
-import { NextResponse } from 'next/server';
+import { withApiHandler, CachePolicy } from '@/server/http/apiHandler';
 import { getFilterMetadata } from '@/server/catalog/catalogRepository';
-import { rateLimit } from '@/server/http/rateLimit';
 
 export const runtime = 'nodejs';
-export const revalidate = 3600;
 
-export async function GET(request) {
-  const limitResponse = rateLimit(request, {
-    limit: 60,
-    windowMs: 60000,
-    id: 'media-metadata',
-  });
-  if (limitResponse) return limitResponse;
-
-  const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type') || 'movie';
-
-  try {
-    const data = await getFilterMetadata(type);
-    return NextResponse.json({ success: true, data }, {
-      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' }
-    });
-  } catch (error) {
-    console.error('API Metadata Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
-}
+/** GET /api/media/metadata?type= — años y países disponibles para filtros. */
+export const GET = withApiHandler(
+  (_request, { searchParams }) => getFilterMetadata(searchParams.get('type') || 'movie'),
+  { id: 'media-metadata', limit: 60, cache: CachePolicy.hour }
+);

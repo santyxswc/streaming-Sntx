@@ -367,6 +367,17 @@ export const getMediaBySlug = async (type, slug) => {
   return rowToItem(rows[0]);
 };
 
+/** Lectura por lotes: los ids que no existen simplemente no aparecen. */
+export const getMediaByIds = async (type, ids) => {
+  if (!ids?.length) return [];
+  const sql = getNeonSql();
+  const mediaType = type === "series" ? "series" : "movie";
+  const rows = await sql`
+    SELECT * FROM media WHERE media_type = ${mediaType} AND id = ANY(${ids})
+  `;
+  return rows.map(rowToItem);
+};
+
 /** Escapa caracteres especiales de regex para búsqueda segura. */
 function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -492,68 +503,6 @@ export const searchCatalog = async (qStr) => {
     .map(({ item }) => byId.get(item.id))
     .filter(Boolean)
     .map(rowToItem);
-};
-
-/** Registra una visita (solo Neon). Usado desde DetailClient. */
-export const recordMediaView = async (mediaId) => {
-  if (!mediaId) return;
-  const sql = getNeonSql();
-  try {
-    await sql`INSERT INTO media_views (media_id) VALUES (${mediaId})`;
-  } catch (err) {
-    console.error("[neonCatalog] recordMediaView:", err.message);
-  }
-};
-
-/** Tendencias: más vistos en streaming-Sntx + estrenos 2025/2026 populares como fallback. */
-export const getTrendingMedia = async (count = 60) => {
-  const sql = getNeonSql();
-  const TRENDING_DAYS = 30;
-  const since = new Date();
-  since.setDate(since.getDate() - TRENDING_DAYS);
-
-  const byViews = await sql`
-    SELECT m.*
-    FROM media m
-    INNER JOIN (
-      SELECT media_id, COUNT(*) as cnt
-      FROM media_views
-      WHERE viewed_at >= ${since}
-      GROUP BY media_id
-      ORDER BY cnt DESC
-      LIMIT ${Math.ceil(count * 0.6)}
-    ) v ON m.id = v.media_id
-    ORDER BY v.cnt DESC
-  `;
-
-  const seenIds = new Set(byViews.map((r) => r.id));
-  const need = count - byViews.length;
-
-  let fallback = [];
-  if (need > 0) {
-    const excludeIds = Array.from(seenIds);
-    const fallbackRows = excludeIds.length
-      ? await sql`
-          SELECT * FROM media
-          WHERE year IN ('2025', '2026') AND id NOT IN ${sql(excludeIds)}
-          ORDER BY (
-            CASE WHEN rating ~ '^[0-9.]+$' THEN (rating::numeric) ELSE 0 END
-          ) DESC NULLS LAST, scraped_at DESC
-          LIMIT ${need}
-        `
-      : await sql`
-          SELECT * FROM media
-          WHERE year IN ('2025', '2026')
-          ORDER BY (
-            CASE WHEN rating ~ '^[0-9.]+$' THEN (rating::numeric) ELSE 0 END
-          ) DESC NULLS LAST, scraped_at DESC
-          LIMIT ${need}
-        `;
-    fallback = fallbackRows;
-  }
-
-  const combined = [...byViews.map(rowToItem), ...fallback.map(rowToItem)];
-  return combined.slice(0, count);
 };
 
 export const getRecommendationsForItem = async (item, count = 60) => {
