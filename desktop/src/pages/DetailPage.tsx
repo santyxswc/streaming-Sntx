@@ -6,7 +6,7 @@ import { Play, Star, X, Plus, Check, Volume2, VolumeX, ChevronDown, ChevronUp, M
 import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import MovieRow from "@/components/MovieRow";
-import NetflixLoader from "@/components/NetflixLoader";
+import PageLoader from "@/components/PageLoader";
 import { fetchDetail, fetchTrailers, fetchEpisodes, fetchRecommendations, type Trailer } from "@/api/client";
 
 interface DetailItem {
@@ -124,7 +124,7 @@ export default function DetailPage() {
     }
   };
 
-  if (loading) return <NetflixLoader />;
+  if (loading) return <PageLoader />;
   if (!item) return <div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-white">Contenido no encontrado</div>;
 
   const hasTrailer = trailers.length > 0;

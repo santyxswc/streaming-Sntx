@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-import MovieRow from '@/components/MovieRow';
-import NetflixLoader from '@/components/NetflixLoader';
+import Navbar from '@/components/layout/Navbar';
+import MovieRow from '@/features/catalog/components/MovieRow';
+import PageLoader from '@/components/ui/PageLoader';
 import { Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -75,7 +75,7 @@ function SearchResults() {
 
       {loading ? (
         <div className="flex justify-center py-40">
-           <NetflixLoader />
+           <PageLoader />
         </div>
       ) : results.length > 0 ? (
         <motion.div 
@@ -107,7 +107,7 @@ export default function SearchClient() {
   return (
     <main className="min-h-screen bg-background text-white">
       <Navbar />
-      <Suspense fallback={<NetflixLoader />}>
+      <Suspense fallback={<PageLoader />}>
         <SearchResults />
       </Suspense>
     </main>

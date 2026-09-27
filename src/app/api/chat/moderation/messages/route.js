@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rateLimit';
-import { isChatModeratorAuthorized } from '@/lib/chatModerationAuth';
-import { listGlobalFeed } from '@/services/chat/chatRepository';
-import { getChatProvider } from '@/lib/chatEnv';
+import { rateLimit } from '@/server/http/rateLimit';
+import { isChatModeratorAuthorized } from '@/server/chat/moderationAuth';
+import { listGlobalFeed } from '@/server/chat/chatRepository';
+import { getChatProvider } from '@/server/config/chatEnv';
 
 function isUuid(s) {
   return (

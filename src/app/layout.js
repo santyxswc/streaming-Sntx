@@ -2,8 +2,8 @@ import { Sora, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import FirebaseAnalytics from "@/components/FirebaseAnalytics";
-import Footer from "@/components/Footer";
+import FirebaseAnalytics from "@/components/layout/FirebaseAnalytics";
+import Footer from "@/components/layout/Footer";
 
 const fontDisplay = Sora({
   variable: "--font-sora",

@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-import MovieRow from '@/components/MovieRow';
+import Navbar from '@/components/layout/Navbar';
+import MovieRow from '@/features/catalog/components/MovieRow';
 import { Calendar, Globe, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ALL_GENRES } from '@/lib/genreMap';

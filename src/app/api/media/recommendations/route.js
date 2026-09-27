@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getRecommendations } from '@/services/recommendations';
-import { rateLimit } from '@/lib/rateLimit';
+import { getRecommendationsForItem } from '@/server/catalog/catalogRepository';
+import { rateLimit } from '@/server/http/rateLimit';
 
 export const runtime = 'nodejs';
 export const revalidate = 3600;
@@ -27,7 +27,7 @@ export async function GET(request) {
 
   try {
     const item = { id: itemId, type: type === 'series' ? 'series' : 'movie' };
-    const data = await getRecommendations(item, 60);
+    const data = await getRecommendationsForItem(item, 60);
     return NextResponse.json({ success: true, data }, { headers: CACHE_HEADERS });
   } catch (error) {
     console.error('Recommendations API Error:', error);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rateLimit';
-import { getTrailersForMedia } from '@/services/trailers/trailerService';
+import { rateLimit } from '@/server/http/rateLimit';
+import { getTrailersForMedia } from '@/server/trailers/trailerService';
 
 export const runtime = 'nodejs';
 

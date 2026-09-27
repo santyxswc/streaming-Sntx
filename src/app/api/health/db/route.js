@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getNeonSql } from '@/lib/neonSql';
-import { getCatalogProvider } from '@/lib/catalogEnv';
+import { getNeonSql } from '@/server/db/neonSql';
+import { getCatalogProvider } from '@/server/config/catalogEnv';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

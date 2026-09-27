@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
-import Banner from '@/components/Banner';
-import DonateStrip from '@/components/DonateStrip';
-import MovieRow from '@/components/MovieRow';
-import NetflixLoader from '@/components/NetflixLoader';
-import { useMovieStore } from '@/store/useMovieStore';
+import Navbar from '@/components/layout/Navbar';
+import Banner from '@/features/catalog/components/Banner';
+import DonateStrip from '@/features/donations/components/DonateStrip';
+import MovieRow from '@/features/catalog/components/MovieRow';
+import PageLoader from '@/components/ui/PageLoader';
+import { useMovieStore } from '@/features/catalog/store/useMovieStore';
 
 export default function PeliculasClient() {
   const { movies, setMovies, setCachedAt, isMoviesCacheValid } = useMovieStore();
@@ -40,7 +40,7 @@ export default function PeliculasClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount
   }, []);
 
-  if (loading && movies.length === 0) return <NetflixLoader />;
+  if (loading && movies.length === 0) return <PageLoader />;
 
   return (
     <main className="relative min-h-screen bg-background">

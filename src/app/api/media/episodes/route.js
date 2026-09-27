@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
-import { rateLimit } from '@/lib/rateLimit';
-import { getCatalogProvider } from '@/lib/catalogEnv';
-import { getDemoEpisodes } from '@/services/catalog/demoCatalog';
-import { getTmdbTvShow, getTmdbSeasonEpisodes } from '@/lib/tmdb';
+import { rateLimit } from '@/server/http/rateLimit';
+import { getCatalogProvider } from '@/server/config/catalogEnv';
+import { getDemoEpisodes } from '@/server/catalog/providers/demoCatalog';
+import { getTmdbTvShow, getTmdbSeasonEpisodes } from '@/server/integrations/tmdb';
 
 export const runtime = 'nodejs';
 export const revalidate = 3600;

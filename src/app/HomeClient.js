@@ -1,13 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
-import Banner from '@/components/Banner';
-import DonateStrip from '@/components/DonateStrip';
-import AISearchHome from '@/components/AISearchHome';
-import MovieRow from '@/components/MovieRow';
+import Navbar from '@/components/layout/Navbar';
+import Banner from '@/features/catalog/components/Banner';
+import DonateStrip from '@/features/donations/components/DonateStrip';
+import AISearchHome from '@/features/ai-search/components/AISearchHome';
+import MovieRow from '@/features/catalog/components/MovieRow';
 import { Flame, Award, Tv, Sparkles, Clapperboard } from 'lucide-react';
-import { useMovieStore } from '@/store/useMovieStore';
-import NetflixLoader from '@/components/NetflixLoader';
+import { useMovieStore } from '@/features/catalog/store/useMovieStore';
+import PageLoader from '@/components/ui/PageLoader';
 
 export default function HomeClient() {
   const { 
@@ -101,7 +101,7 @@ export default function HomeClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount, cache check via isCacheValid
   }, []);
 
-  if (loading && movies.length === 0) return <NetflixLoader />;
+  if (loading && movies.length === 0) return <PageLoader />;
 
   return (
     <main className="relative min-h-screen bg-background overflow-x-hidden">

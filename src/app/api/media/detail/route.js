@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getMediaBySlug } from '@/services/db';
-import { getTmdbMedia } from '@/lib/tmdb';
-import { rateLimit } from '@/lib/rateLimit';
+import { getMediaBySlug } from '@/server/catalog/catalogRepository';
+import { getTmdbMedia } from '@/server/integrations/tmdb';
+import { rateLimit } from '@/server/http/rateLimit';
 
 export const runtime = 'nodejs';
 export const revalidate = 3600;

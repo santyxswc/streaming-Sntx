@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Banner from "@/components/Banner";
 import MovieRow from "@/components/MovieRow";
-import NetflixLoader from "@/components/NetflixLoader";
+import PageLoader from "@/components/PageLoader";
 import { useMovieStore } from "@/store/useMovieStore";
 import { api } from "@/config/api";
 
@@ -37,7 +37,7 @@ export default function SeriesPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading && series.length === 0) return <NetflixLoader />;
+  if (loading && series.length === 0) return <PageLoader />;
 
   return (
     <div className="relative min-h-screen bg-[var(--background)]">

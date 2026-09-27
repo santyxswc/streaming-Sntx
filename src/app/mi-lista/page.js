@@ -1,10 +1,10 @@
 'use client';
 import { useState, useSyncExternalStore } from 'react';
-import { useFavoritesStore } from '@/store/useFavoritesStore';
-import { useAuthStore } from '@/store/useAuthStore';
-import Navbar from '@/components/Navbar';
-import MovieRow from '@/components/MovieRow';
-import AuthModal from '@/components/AuthModal';
+import { useFavoritesStore } from '@/features/favorites/store/useFavoritesStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import Navbar from '@/components/layout/Navbar';
+import MovieRow from '@/features/catalog/components/MovieRow';
+import AuthModal from '@/features/auth/components/AuthModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeartOff, Sparkles, UserPlus } from 'lucide-react';
 

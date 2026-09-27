@@ -1,5 +1,5 @@
 import DetailClient from './DetailClient';
-import { getMediaBySlug } from '@/services/db';
+import { getMediaBySlug } from '@/server/catalog/catalogRepository';
 
 export const revalidate = 3600;
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
-import { verifyBearerUid, formatVerifyAuthError } from '@/lib/firebaseAdmin';
-import { isChatNameAvailable } from '@/services/chat/chatRepository';
+import { rateLimit, rateLimitKey } from '@/server/http/rateLimit';
+import { verifyBearerUid, formatVerifyAuthError } from '@/server/db/firebaseAdmin';
+import { isChatNameAvailable } from '@/server/chat/chatRepository';
 
 /**
  * GET ?name= — comprueba disponibilidad del apodo antes de guardar (misma lógica que PATCH).

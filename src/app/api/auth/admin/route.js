@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rateLimit';
-import { verifyBearerUid } from '@/lib/firebaseAdmin';
+import { rateLimit } from '@/server/http/rateLimit';
+import { verifyBearerUid } from '@/server/db/firebaseAdmin';
 
 /**
  * GET — indica si el usuario autenticado está en CHAT_ADMIN_UIDS (panel moderación chat).

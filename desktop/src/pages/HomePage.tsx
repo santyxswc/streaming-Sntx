@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Banner from "@/components/Banner";
 import MovieRow from "@/components/MovieRow";
 import { useMovieStore } from "@/store/useMovieStore";
-import NetflixLoader from "@/components/NetflixLoader";
+import PageLoader from "@/components/PageLoader";
 import { api } from "@/config/api";
 
 export default function HomePage() {
@@ -82,7 +82,7 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading && movies.length === 0) return <NetflixLoader />;
+  if (loading && movies.length === 0) return <PageLoader />;
 
   return (
     <div className="relative min-h-screen bg-[var(--background)] overflow-x-hidden">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import MovieRow from "@/components/MovieRow";
-import NetflixLoader from "@/components/NetflixLoader";
+import PageLoader from "@/components/PageLoader";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "@/config/api";
@@ -47,7 +47,7 @@ export default function SearchPage() {
 
       {loading ? (
         <div className="flex justify-center py-40">
-          <NetflixLoader />
+          <PageLoader />
         </div>
       ) : results.length > 0 ? (
         <motion.div

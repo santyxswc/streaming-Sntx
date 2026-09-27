@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { discoverTmdbPage, isTmdbConfigured } from '@/lib/tmdb';
-import { saveMediaBatch, updateFilterMetadata } from '@/services/db';
-import { getNeonSql } from '@/lib/neonSql';
+import { discoverTmdbPage, isTmdbConfigured } from '@/server/integrations/tmdb';
+import { saveMediaBatch, updateFilterMetadata } from '@/server/catalog/catalogRepository';
+import { getNeonSql } from '@/server/db/neonSql';
 
 export const runtime = 'nodejs';
 

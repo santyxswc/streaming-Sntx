@@ -4,20 +4,20 @@ import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Star, Plus, Check, Share2, Volume2, VolumeX, ChevronDown, ChevronUp } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import MediaImage from '@/components/MediaImage';
-import MovieRow from '@/components/MovieRow';
-import NetflixLoader from '@/components/NetflixLoader';
-import TrailerTheater from '@/components/TrailerTheater';
-import { useFavoritesStore } from '@/store/useFavoritesStore';
-import { useAuthStore } from '@/store/useAuthStore';
-import { useTrailers } from '@/hooks/useTrailers';
+import Navbar from '@/components/layout/Navbar';
+import MediaImage from '@/components/ui/MediaImage';
+import MovieRow from '@/features/catalog/components/MovieRow';
+import PageLoader from '@/components/ui/PageLoader';
+import TrailerTheater from '@/features/trailers/components/TrailerTheater';
+import { useFavoritesStore } from '@/features/favorites/store/useFavoritesStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { useTrailers } from '@/features/trailers/hooks/useTrailers';
 import { youtubeEmbedUrl } from '@/lib/youtube';
 import { cn } from '@/lib/utils';
 
-const ShareModal = dynamic(() => import('@/components/ShareModal'), { ssr: false, loading: () => null });
-const CatalogChatPopup = dynamic(() => import('@/components/CatalogChatPopup'), { ssr: false, loading: () => null });
-const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false, loading: () => null });
+const ShareModal = dynamic(() => import('@/features/catalog/components/ShareModal'), { ssr: false, loading: () => null });
+const CatalogChatPopup = dynamic(() => import('@/features/chat/components/CatalogChatPopup'), { ssr: false, loading: () => null });
+const AuthModal = dynamic(() => import('@/features/auth/components/AuthModal'), { ssr: false, loading: () => null });
 
 const HERO_TRAILER_DELAY_MS = 3000;
 
@@ -117,7 +117,7 @@ export default function DetailClient() {
     }
   };
 
-  if (loading) return <NetflixLoader />;
+  if (loading) return <PageLoader />;
   if (!item) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-white">

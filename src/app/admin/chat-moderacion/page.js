@@ -1,4 +1,4 @@
-import ChatModerationPanel from '@/components/ChatModerationPanel';
+import ChatModerationPanel from '@/features/chat/components/ChatModerationPanel';
 
 export const metadata = {
   title: 'Moderación chat | streaming-Sntx',

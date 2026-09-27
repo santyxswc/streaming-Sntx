@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { findMediaForAiLookup } from '@/services/db';
-import { chatCompletion } from '@/lib/deepseek';
-import { rateLimit } from '@/lib/rateLimit';
+import { findMediaForAiLookup } from '@/server/catalog/catalogRepository';
+import { chatCompletion } from '@/server/integrations/deepseek';
+import { rateLimit } from '@/server/http/rateLimit';
 
 export const runtime = 'nodejs';
 

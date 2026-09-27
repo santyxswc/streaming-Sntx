@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { searchCatalog } from '@/services/db';
-import { rateLimit } from '../../../../lib/rateLimit';
+import { searchCatalog } from '@/server/catalog/catalogRepository';
+import { rateLimit } from '@/server/http/rateLimit';
 
 export const runtime = 'nodejs';
 export const revalidate = 1800;

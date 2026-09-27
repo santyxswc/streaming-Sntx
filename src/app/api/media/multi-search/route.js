@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { searchCatalog } from "@/services/db";
-import { searchTmdb, isTmdbConfigured } from "@/lib/tmdb";
-import { searchOmdb, isOmdbConfigured } from "@/lib/omdb";
-import { rateLimit } from "@/lib/rateLimit";
+import { searchCatalog } from "@/server/catalog/catalogRepository";
+import { searchTmdb, isTmdbConfigured } from "@/server/integrations/tmdb";
+import { searchOmdb, isOmdbConfigured } from "@/server/integrations/omdb";
+import { rateLimit } from "@/server/http/rateLimit";
 
 export const runtime = "nodejs";
 export const revalidate = 1800;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
-import { verifyBearerUid, formatVerifyAuthError } from '@/lib/firebaseAdmin';
+import { rateLimit, rateLimitKey } from '@/server/http/rateLimit';
+import { verifyBearerUid, formatVerifyAuthError } from '@/server/db/firebaseAdmin';
 import {
   getOrCreateProfile,
   updateChatName,
-} from '@/services/chat/chatRepository';
+} from '@/server/chat/chatRepository';
 
 async function requireUid(req) {
   try {

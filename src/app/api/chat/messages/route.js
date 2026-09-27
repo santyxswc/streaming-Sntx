@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { rateLimit, rateLimitKey } from '@/lib/rateLimit';
-import { verifyBearerUid, formatVerifyAuthError } from '@/lib/firebaseAdmin';
+import { rateLimit, rateLimitKey } from '@/server/http/rateLimit';
+import { verifyBearerUid, formatVerifyAuthError } from '@/server/db/firebaseAdmin';
 import {
   listMessages,
   appendMessage,
   mediaExists,
   getOrCreateProfile,
-} from '@/services/chat/chatRepository';
+} from '@/server/chat/chatRepository';
 
 const MAX_BODY = 500;
 const MIN_BODY = 1;
