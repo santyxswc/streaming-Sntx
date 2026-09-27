@@ -23,9 +23,11 @@ export async function POST(req) {
 
     // Check if DeepSeek is configured
     if (!process.env.DEEPSEEK_API_KEY) {
+      console.warn('[ai/search] DEEPSEEK_API_KEY no configurada: búsqueda IA deshabilitada.');
       return NextResponse.json({
         success: true,
-        message: 'El asistente IA no está configurado en este momento. Para habilitarlo, define DEEPSEEK_API_KEY en tu archivo .env.local. Puedes obtener una API key en https://platform.deepseek.com',
+        // Mensaje para el visitante; la configuración faltante se registra en el servidor.
+        message: 'El asistente IA no está disponible en este momento. Mientras tanto, usa el buscador del menú.',
         data: null
       });
     }
@@ -96,6 +98,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('AI Search Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'No se pudo completar la búsqueda con IA' }, { status: 500 });
   }
 }
