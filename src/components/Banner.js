@@ -1,12 +1,17 @@
 'use client';
 import { useState, useEffect, memo } from 'react';
-import { Play, Info, Volume2, VolumeX } from 'lucide-react';
+import { Play, Info, Volume2, VolumeX, Plus, Check, Star, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFavoritesStore } from '@/store/useFavoritesStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const Banner = ({ movie }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const favorite = useFavoritesStore((s) => Boolean(s.favoriteIds?.[movie?.id]));
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     if (movie?.trailer) {
@@ -23,6 +28,10 @@ const Banner = ({ movie }) => {
     : movie.trailer?.split('/').pop();
 
   const detailUrl = `/${movie.type === 'movie' ? 'peliculas' : movie.type === 'series' ? 'series' : 'anime'}/${movie.id}`;
+  const primaryGenre = Array.isArray(movie.genres) ? movie.genres[0] : null;
+  const ratingValue = parseFloat(movie.rating);
+  const hasRating = Number.isFinite(ratingValue) && ratingValue > 0;
+  const typeLabel = movie.type === 'movie' ? 'Película' : movie.type === 'series' ? 'Serie' : 'Anime';
 
   return (
     <div className="relative w-full h-[75vh] md:h-[85vh] lg:h-[90vh] bg-black overflow-hidden group">
@@ -69,23 +78,28 @@ const Banner = ({ movie }) => {
       {/* Hero Content */}
       <div className="absolute inset-0 flex flex-col justify-end pb-[10vh] md:pb-[15vh] px-4 md:px-12 z-30 pointer-events-none">
         <div className="max-w-[95%] md:max-w-[80%] lg:max-w-[70%] space-y-4 md:space-y-6 pointer-events-auto">
-          <motion.h1 
+          <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             className="flex items-center gap-2 text-[10px] md:text-xs font-mono font-bold uppercase tracking-widest text-secondary"
+          >
+             <span className="border border-secondary/40 bg-secondary/10 px-2 py-0.5 rounded">{typeLabel}</span>
+             {primaryGenre && <span className="border border-white/15 bg-white/5 px-2 py-0.5 rounded text-gray-300">{primaryGenre}</span>}
+             {movie.year && <span className="border border-white/15 bg-white/5 px-2 py-0.5 rounded text-gray-300">{movie.year}</span>}
+             {hasRating && (
+               <span className="flex items-center gap-1 border border-white/15 bg-white/5 px-2 py-0.5 rounded text-gray-300">
+                 <Star size={10} className="text-primary fill-primary" /> {ratingValue.toFixed(1)}
+               </span>
+             )}
+          </motion.div>
+
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter drop-shadow-2xl leading-[0.95] uppercase italic text-white line-clamp-2"
+            className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight drop-shadow-2xl leading-[0.95] text-white line-clamp-2"
           >
             {movie.title}
           </motion.h1>
-          
-          <motion.div 
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             transition={{ delay: 0.2 }}
-             className="flex items-center gap-3 text-[10px] md:text-xs font-black uppercase tracking-widest text-primary"
-          >
-             <span className="bg-primary/20 border border-primary/30 px-2 py-0.5 rounded">Top 10 Global</span>
-             <span className="text-white bg-white/10 px-2 py-0.5 rounded">Original</span>
-          </motion.div>
 
           {movie.overview && (
             <motion.p 
@@ -114,7 +128,25 @@ const Banner = ({ movie }) => {
                 <Info className="w-4 h-4 md:w-6 md:h-6" /> Info
               </button>
             </Link>
+            <button
+              onClick={() => toggleFavorite(movie, user?.uid)}
+              title={favorite ? 'En mi lista' : 'Añadir a mi lista'}
+              className="flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full border border-white/20 bg-black/40 hover:bg-white/10 transition-all backdrop-blur-sm shrink-0"
+            >
+              {favorite ? <Check className="w-5 h-5 md:w-6 md:h-6 text-secondary" /> : <Plus className="w-5 h-5 md:w-6 md:h-6 text-white" />}
+            </button>
           </motion.div>
+
+          <motion.a
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            href="#ai-search"
+            className="flex items-center gap-2 text-xs md:text-sm text-gray-300 hover:text-white transition-colors w-fit"
+          >
+            <Sparkles size={14} className="text-secondary shrink-0" />
+            ¿No sabes qué ver? <span className="text-secondary font-bold">Pídeselo a la IA con lenguaje natural</span>
+          </motion.a>
         </div>
       </div>
 
@@ -126,18 +158,13 @@ const Banner = ({ movie }) => {
         {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
       </button>
 
-      {/* Desktop: mute + rating grouped; Mobile: rating only */}
-      <div className="absolute bottom-[10vh] md:bottom-[15vh] right-4 md:right-0 z-40 flex items-center gap-3">
-        <button 
-          onClick={() => setIsMuted(!isMuted)}
-          className="hidden md:flex p-4 rounded-full border border-white/20 bg-black/40 hover:bg-white/10 transition-all backdrop-blur-sm shrink-0"
-        >
-          {isMuted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
-        </button>
-        <div className="bg-black/80 backdrop-blur-md border-l-4 border-primary pl-4 py-2 pr-8 md:pr-24 text-base md:text-2xl font-black text-white">
-          {movie.rating} <span className="text-[10px] text-gray-400 block uppercase tracking-wider">IMDB Rating</span>
-        </div>
-      </div>
+      {/* Desktop mute button */}
+      <button
+        onClick={() => setIsMuted(!isMuted)}
+        className="hidden md:flex absolute bottom-[10vh] md:bottom-[15vh] right-4 md:right-12 z-40 p-4 rounded-full border border-white/20 bg-black/40 hover:bg-white/10 transition-all backdrop-blur-sm shrink-0"
+      >
+        {isMuted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
+      </button>
     </div>
   );
 };

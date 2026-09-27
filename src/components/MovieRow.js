@@ -1,17 +1,22 @@
 'use client';
 import { useState, useRef, useEffect, memo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Play, Plus, Check, Star } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import ItemPreview from './ItemPreview';
 import MediaImage from './MediaImage';
+import { useFavoritesStore } from '@/store/useFavoritesStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
-const MovieCard = memo(({ item, isGrid = false }) => {
+const MovieCard = memo(({ item, isGrid = false, rank }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const timerRef = useRef(null);
   const leaveTimerRef = useRef(null);
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const favorite = useFavoritesStore((s) => Boolean(s.favoriteIds?.[item.id]));
+  const user = useAuthStore((s) => s.user);
 
   // Clear timers on unmount
   useEffect(() => {
@@ -61,50 +66,79 @@ const MovieCard = memo(({ item, isGrid = false }) => {
   };
 
   const detailLink = `/${item.type === 'movie' ? 'peliculas' : item.type === 'series' ? 'series' : 'anime'}/${item.id}`;
+  const primaryGenre = Array.isArray(item.genres) ? item.genres[0] : null;
+  const ratingValue = parseFloat(item.rating);
+  const hasRating = Number.isFinite(ratingValue) && ratingValue > 0;
 
   return (
     <>
-      <div 
+      <div
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={cn("relative", !isGrid && "flex-shrink-0")}
+        className={cn(
+          "group relative flex flex-col rounded-xl overflow-hidden bg-card-bg ring-1 ring-white/5 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:ring-primary/40 hover:shadow-[0_16px_36px_-8px_rgba(139,92,246,0.35)]",
+          isGrid ? "w-full" : "flex-shrink-0 w-[150px] sm:w-[180px] md:w-[240px]"
+        )}
       >
-        <Link 
-          href={detailLink}
-          className="block"
-        >
-          <motion.div
-            whileHover={{ scale: 1.05, y: -5 }}
-            className={cn(
-              "relative cursor-pointer rounded-lg overflow-hidden group shadow-lg transition-transform",
-              isGrid 
-                ? "w-full aspect-[2/3]" 
-                : "w-[160px] h-[240px] md:w-[240px] md:h-[360px]"
-            )}
-          >
-            <MediaImage
-              src={item.image}
-              alt={item.title}
-              className="w-full h-full object-cover transition-premium filter brightness-90 group-hover:brightness-100"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-premium flex flex-col justify-end p-4">
-              <p className="text-sm font-bold truncate">{item.title}</p>
-              <div className="flex items-center gap-2 text-[10px] text-gray-300">
-                <span>{item.year}</span>
-                <span className="border border-gray-400 px-1 rounded uppercase font-bold text-primary">{item.rating}</span>
-              </div>
-            </div>
-          </motion.div>
+        <Link href={detailLink} className="relative block aspect-[2/3] w-full overflow-hidden">
+          <MediaImage
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          {rank && (
+            <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-accent text-white text-[10px] font-black uppercase tracking-wide shadow-lg">
+              Top {rank}
+            </span>
+          )}
+          {hasRating && (
+            <span className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm text-secondary text-[10px] font-bold font-mono">
+              <Star size={10} fill="currentColor" />
+              {ratingValue.toFixed(1)}
+            </span>
+          )}
         </Link>
+
+        <div className="flex flex-col gap-1.5 p-2.5 bg-card-bg">
+          <Link href={detailLink}>
+            <p className="text-xs md:text-sm font-bold text-white truncate hover:text-primary transition-colors">
+              {item.title}
+            </p>
+          </Link>
+          <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-wide text-gray-500">
+            <span className="shrink-0">{item.year || '—'}</span>
+            {primaryGenre && <span className="text-secondary truncate">{primaryGenre}</span>}
+          </div>
+          <div className="flex items-center gap-2 pt-0.5">
+            <Link
+              href={detailLink}
+              className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
+              title="Reproducir"
+            >
+              <Play size={12} fill="currentColor" className="ml-0.5" />
+            </Link>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite(item, user?.uid);
+              }}
+              className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors shrink-0"
+              title={favorite ? 'En mi lista' : 'Añadir a mi lista'}
+            >
+              {favorite ? <Check size={12} /> : <Plus size={12} />}
+            </button>
+          </div>
+        </div>
       </div>
-      
+
       <AnimatePresence>
         {showPreview && (
-          <ItemPreview 
-            item={item} 
-            isVisible={showPreview} 
-            x={coords.x} 
-            y={coords.y} 
+          <ItemPreview
+            item={item}
+            isVisible={showPreview}
+            x={coords.x}
+            y={coords.y}
             onMouseEnter={handlePreviewEnter}
             onMouseLeave={handlePreviewLeave}
           />
@@ -115,7 +149,7 @@ const MovieCard = memo(({ item, isGrid = false }) => {
 });
 MovieCard.displayName = 'MovieCard';
 
-const MovieRowComponent = ({ title, items, listingType }) => {
+const MovieRowComponent = ({ title, items, listingType, icon: Icon, iconColor = 'text-secondary', showRank = false }) => {
   const rowRef = useRef(null);
   const [isMoved, setIsMoved] = useState(false);
 
@@ -135,14 +169,16 @@ const MovieRowComponent = ({ title, items, listingType }) => {
   return (
     <div className="px-4 md:px-12 space-y-2 group/row relative py-8">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl md:text-2xl font-semibold text-gray-200 hover:text-white transition-premium cursor-pointer">
+        <h2 className="flex items-center gap-2 text-xl md:text-2xl font-semibold text-gray-200 hover:text-white transition-premium cursor-pointer">
+          {Icon && <Icon size={20} className={cn(iconColor, "shrink-0")} />}
           {title}
         </h2>
-        <Link 
-          href={listingUrl} 
-          className="text-sm text-gray-400 hover:text-white transition-premium uppercase tracking-widest font-bold opacity-0 group-hover/row:opacity-100"
+        <Link
+          href={listingUrl}
+          className="flex items-center gap-1 text-sm text-secondary hover:text-white transition-premium uppercase tracking-widest font-bold opacity-0 group-hover/row:opacity-100"
         >
           Ver todas
+          <ChevronRight size={16} />
         </Link>
       </div>
 
@@ -157,10 +193,14 @@ const MovieRowComponent = ({ title, items, listingType }) => {
 
         <div 
           ref={rowRef}
-          className="flex items-center gap-4 md:gap-6 overflow-x-scroll scrollbar-hide p-2 -m-2 no-scrollbar"
+          className="flex items-start gap-4 md:gap-6 overflow-x-scroll scrollbar-hide p-2 -m-2 no-scrollbar"
         >
           {items.map((item, idx) => (
-            <MovieCard key={`${item.id}-${idx}`} item={item} />
+            <MovieCard
+              key={`${item.id}-${idx}`}
+              item={item}
+              rank={showRank && idx < 5 ? idx + 1 : undefined}
+            />
           ))}
         </div>
 

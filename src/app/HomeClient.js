@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Banner from '@/components/Banner';
 import DonateStrip from '@/components/DonateStrip';
+import AISearchHome from '@/components/AISearchHome';
 import MovieRow from '@/components/MovieRow';
+import { Flame, Award, Tv, Sparkles, Clapperboard } from 'lucide-react';
 import { useMovieStore } from '@/store/useMovieStore';
 import NetflixLoader from '@/components/NetflixLoader';
 
@@ -108,13 +110,14 @@ export default function HomeClient() {
       <div className="relative">
         <Banner movie={featuredMovie || movies[0] || popularMovies[0]} />
         <DonateStrip />
-        <div className="relative z-10 py-12 md:py-20 space-y-12 md:space-y-20 pb-40">
-          <MovieRow title="Tendencias ahora" items={movies} listingType="peliculas" />
-          <MovieRow title="Aclamadas por la crítica" items={popularMovies} listingType="peliculas" />
-          <MovieRow title="Series populares" items={series} listingType="series" />
-          <MovieRow title="Estrenos recientes" items={latestMovies} listingType="peliculas" />
-          <MovieRow title="Series que no te puedes perder" items={popularSeries} listingType="series" />
-          <MovieRow title="Nuevas temporadas" items={latestSeries} listingType="series" />
+        <AISearchHome />
+        <div className="relative z-10 py-8 md:py-12 space-y-12 md:space-y-20 pb-40">
+          <MovieRow title="Tendencias ahora" items={movies} listingType="peliculas" icon={Flame} iconColor="text-accent" showRank />
+          <MovieRow title="Películas aclamadas por la crítica" items={popularMovies} listingType="peliculas" icon={Award} iconColor="text-secondary" />
+          <MovieRow title="Series para maratonear" items={series} listingType="series" icon={Tv} iconColor="text-primary" />
+          <MovieRow title="Estrenos recientes" items={latestMovies} listingType="peliculas" icon={Clapperboard} iconColor="text-secondary" />
+          <MovieRow title="Series que no te puedes perder" items={popularSeries} listingType="series" icon={Sparkles} iconColor="text-primary" />
+          <MovieRow title="Nuevas temporadas" items={latestSeries} listingType="series" icon={Tv} iconColor="text-secondary" />
         </div>
       </div>
     </main>
