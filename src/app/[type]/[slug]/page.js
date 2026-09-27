@@ -31,7 +31,7 @@ export async function generateMetadata({ params }) {
     console.error("Metadata error:", err);
   }
 
-  return { title: 'Ver Contenido | streaming-Sntx' };
+  return { title: 'Tráiler | streaming-Sntx' };
 }
 
 export default function DetailPage() {

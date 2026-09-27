@@ -120,7 +120,7 @@ const Banner = ({ movie }) => {
           >
             <Link href={detailUrl}>
               <button className="flex items-center gap-2 bg-white text-black px-6 md:px-10 py-2.5 md:py-4 rounded-md hover:bg-white/90 transition-all font-black shadow-xl hover:scale-105 text-sm md:text-xl uppercase tracking-tighter">
-                <Play className="fill-black w-4 h-4 md:w-6 md:h-6" /> Play
+                <Play className="fill-black w-4 h-4 md:w-6 md:h-6" /> Tráiler
               </button>
             </Link>
             <Link href={detailUrl}>

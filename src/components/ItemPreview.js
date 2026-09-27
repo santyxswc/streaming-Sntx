@@ -39,7 +39,7 @@ const ItemPreview = ({ item, isVisible, x, y, onMouseEnter, onMouseLeave }) => {
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <Link href={detailUrl}>
-            <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition-premium">
+            <button title="Ver tráiler" className="w-10 h-10 rounded-full bg-white flex items-center justify-center hover:bg-white/80 transition-premium">
               <Play size={20} fill="black" className="ml-1" />
             </button>
           </Link>

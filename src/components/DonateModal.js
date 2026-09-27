@@ -50,7 +50,7 @@ function DonateModal({ isOpen, onClose, cafecitoUsername }) {
                 Donar un café a streaming-Sntx ☕
               </h3>
               <p className="text-gray-400 text-xs max-w-sm leading-relaxed">
-                Tu donación nos ayuda a seguir ofreciendo streaming-Sntx gratis para todos, sin anuncios que interrumpan tu película o serie. Cada aporte suma para que sigas disfrutando de la experiencia gratuita 💜
+                Tu donación ayuda a mantener streaming-Sntx gratis y sin anuncios. Cada aporte suma para seguir mejorando el proyecto 💜
               </p>
             </div>
 

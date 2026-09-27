@@ -33,8 +33,8 @@ export const api = {
   detail: (type: string, slug: string) =>
     `${API_BASE}/api/media/detail?type=${encodeURIComponent(type)}&slug=${encodeURIComponent(slug)}`,
 
-  player: (postId: string) =>
-    `${API_BASE}/api/media/player?postId=${encodeURIComponent(postId)}`,
+  trailer: (type: "movie" | "series", id: string) =>
+    `${API_BASE}/api/media/trailer?type=${type}&id=${encodeURIComponent(id)}`,
 
   search: (q: string) =>
     `${API_BASE}/api/media/search?q=${encodeURIComponent(q)}`,

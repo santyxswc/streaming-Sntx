@@ -591,47 +591,13 @@ export const getRecommendationsForItem = async (item, count = 60) => {
   return items.filter((i) => i.id !== item.id).slice(0, count);
 };
 
-// --- Player / Episodios demo (sin fuente externa) ---
-// En modo demo no hay un scraper real, así que usamos el tráiler de YouTube
-// como "servidor" de reproducción y generamos episodios ficticios navegables.
+// --- Episodios demo (sin fuente externa) ---
 
 const DEMO_EPISODES_PER_SEASON = 6;
-
-function youtubeEmbedUrl(trailerUrl) {
-  if (!trailerUrl) return null;
-  const id = trailerUrl.includes("v=")
-    ? trailerUrl.split("v=")[1]?.split("&")[0]
-    : trailerUrl.split("/").pop();
-  if (!id) return null;
-  return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-}
 
 function buildDemoEpisodeId(numericId, season, ep) {
   return `demo-${numericId}-s${season}-e${ep}`;
 }
-
-/** postId puede ser el numericId de una película/serie, o un id de episodio demo. */
-export const getDemoPlayer = async (postId) => {
-  const idStr = String(postId);
-  let item = null;
-
-  if (idStr.startsWith("demo-")) {
-    const match = idStr.match(/^demo-(\d+)-s/);
-    const showNumericId = match ? Number(match[1]) : null;
-    item = ALL_ITEMS.find((i) => i.numericId === showNumericId);
-  } else {
-    const numeric = Number(postId);
-    item = ALL_ITEMS.find((i) => i.numericId === numeric);
-  }
-
-  if (!item) return null;
-  const embedUrl = youtubeEmbedUrl(item.trailer);
-  if (!embedUrl) return null;
-
-  return {
-    embeds: [{ url: embedUrl, label: "Demo (Tráiler)" }],
-  };
-};
 
 export const getDemoEpisodes = async (showId, season = "1") => {
   const numeric = Number(showId);

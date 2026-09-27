@@ -14,11 +14,19 @@ export async function fetchDetail(type: string, slug: string) {
   return data.data;
 }
 
-export async function fetchPlayer(postId: string) {
-  const res = await fetch(api.player(postId));
+export interface Trailer {
+  key: string;
+  name: string;
+  language: string;
+  official: boolean;
+  type: string;
+}
+
+export async function fetchTrailers(type: "movie" | "series", id: string): Promise<Trailer[]> {
+  const res = await fetch(api.trailer(type, id));
   const data = await res.json();
-  if (!data.success) throw new Error(data.error || "Failed to fetch player");
-  return data.data;
+  if (!data.success) throw new Error(data.error || "Failed to fetch trailers");
+  return data.data?.trailers || [];
 }
 
 export async function fetchSearch(q: string) {

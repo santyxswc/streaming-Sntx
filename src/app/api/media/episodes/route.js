@@ -12,13 +12,6 @@ const CACHE_HEADERS = {
   'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
 };
 
-const SOURCE_URL = (process.env.SOURCE_URL || process.env.SCRAPER_SOURCE_URL || 'https://lamovie.org').replace(/\/+$/, '');
-const COMMON_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-  'Accept': 'application/json',
-  'Referer': `${SOURCE_URL}/`,
-};
-
 export async function GET(request) {
   // Apply Rate Limit: 40 req/min
   const limitResponse = rateLimit(request, {
@@ -91,12 +84,5 @@ export async function GET(request) {
     return NextResponse.json({ success: true, data }, { headers: CACHE_HEADERS });
   }
 
-  try {
-    const url = `${SOURCE_URL}/wp-api/v1/single/episodes/list?_id=${showId}&season=${season}&page=1&postsPerPage=50`;
-    const { data } = await axios.get(url, { headers: COMMON_HEADERS, timeout: 5000 });
-
-    return NextResponse.json({ success: true, data: data.data }, { headers: CACHE_HEADERS });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+  return NextResponse.json({ success: false, error: 'Serie no encontrada' }, { status: 404 });
 }

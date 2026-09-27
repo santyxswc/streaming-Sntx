@@ -28,32 +28,32 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://streaming-sntx.verc
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "streaming-Sntx | Streaming de Películas y Series en HD",
+    default: "streaming-Sntx | Tráilers de Películas y Series",
     template: "%s | streaming-Sntx"
   },
-  description: "Disfruta del mejor contenido de películas, series y anime con una experiencia premium cinematográfica y búsqueda asistida por IA.",
-  keywords: ["streaming", "peliculas", "series", "anime", "hd", "estrenos", "sntx"],
+  description: "Descubre películas, series y anime a través de sus tráilers oficiales, con una experiencia cinematográfica y búsqueda asistida por IA.",
+  keywords: ["trailers", "peliculas", "series", "anime", "estrenos", "catalogo", "sntx"],
   authors: [{ name: "streaming-Sntx" }],
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: siteUrl,
     siteName: "streaming-Sntx",
-    title: "streaming-Sntx | Tu Cinemateca Premium",
-    description: "Cientos de títulos a un click de distancia. La mejor calidad de streaming con diseño cinematográfico.",
+    title: "streaming-Sntx | Tu cartelera de tráilers",
+    description: "Más de 100.000 películas y series con sus tráilers oficiales, fichas y recomendaciones.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "streaming-Sntx Streaming Platform",
+        alt: "streaming-Sntx",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "streaming-Sntx | Streaming Premium",
-    description: "Descubre lo último en cine y series con la mejor experiencia visual.",
+    title: "streaming-Sntx | Tráilers de Películas y Series",
+    description: "Descubre lo último en cine y series a través de sus tráilers oficiales.",
     images: ["/og-image.png"],
   },
   robots: {

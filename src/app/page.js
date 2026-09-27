@@ -2,7 +2,7 @@ import HomeClient from './HomeClient';
 
 export const metadata = {
   title: "Inicio",
-  description: "Explora el catálogo más completo de películas y series en streaming-Sntx. Tu cine en casa con calidad premium.",
+  description: "Explora un catálogo de más de 100.000 películas y series y mira sus tráilers oficiales en streaming-Sntx.",
 };
 
 export default function Home() {

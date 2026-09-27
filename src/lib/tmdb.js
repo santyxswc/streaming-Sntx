@@ -210,18 +210,6 @@ function extractTrailerKey(videos) {
 }
 
 /**
- * Convierte una URL "watch?v=" de YouTube en su URL de embed.
- */
-export function youtubeEmbedFromWatchUrl(watchUrl) {
-  if (!watchUrl) return null;
-  const id = watchUrl.includes("v=")
-    ? watchUrl.split("v=")[1]?.split("&")[0]
-    : watchUrl.split("/").pop();
-  if (!id) return null;
-  return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-}
-
-/**
  * Normaliza el detalle completo de TMDB (movie o tv) a la misma forma
  * que espera el frontend en /[type]/[slug].
  */
@@ -300,6 +288,42 @@ export async function getTmdbSeasonEpisodes(tvId, season = 1) {
   }));
 
   return { posts };
+}
+
+/**
+ * Vídeos de YouTube (tráilers, teasers...) de una película o serie TMDB.
+ * Pide español, inglés y vídeos sin idioma: con solo `es-ES` la mayoría de
+ * títulos no devuelve ningún vídeo.
+ * @returns {Promise<Array<{ key: string, name: string, type: string, language: string, official: boolean, publishedAt: string }>>}
+ */
+export async function getTmdbVideos(type, id) {
+  const path = type === "series" ? `/tv/${id}/videos` : `/movie/${id}/videos`;
+  const data = await tmdbFetch(path, { include_video_language: "es,en,null" });
+  return (data?.results || [])
+    .filter((v) => v.site === "YouTube" && v.key)
+    .map((v) => ({
+      key: v.key,
+      name: v.name || "",
+      type: v.type || "",
+      language: v.iso_639_1 || "",
+      official: Boolean(v.official),
+      publishedAt: v.published_at || "",
+    }));
+}
+
+/**
+ * Busca el id TMDB de un título por nombre (y año si se conoce).
+ * @returns {Promise<number | null>}
+ */
+export async function findTmdbIdByTitle(type, title, year) {
+  if (!title) return null;
+  const isSeries = type === "series";
+  const params = { query: title, include_adult: "false" };
+  if (year && /^\d{4}$/.test(String(year))) {
+    params[isSeries ? "first_air_date_year" : "year"] = String(year);
+  }
+  const data = await tmdbFetch(isSeries ? "/search/tv" : "/search/movie", params);
+  return data?.results?.[0]?.id ?? null;
 }
 
 /**

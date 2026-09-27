@@ -113,7 +113,7 @@ const MovieCard = memo(({ item, isGrid = false, rank }) => {
             <Link
               href={detailLink}
               className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
-              title="Reproducir"
+              title="Ver tráiler"
             >
               <Play size={12} fill="currentColor" className="ml-0.5" />
             </Link>

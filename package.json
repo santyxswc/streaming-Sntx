@@ -8,11 +8,6 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:genres": "node scripts/migrate-genre-labels.mjs",
-    "ingest:la-movie": "node scripts/ingest-la-movie.mjs",
-    "ingest:series:full": "cross-env INGEST_FULL=1 INGEST_TYPE=series node scripts/ingest-la-movie.mjs",
-    "ingest:movie:full": "cross-env INGEST_FULL=1 INGEST_TYPE=movie node scripts/ingest-la-movie.mjs",
-    "ingest:movie:7000": "cross-env INGEST_FULL=1 INGEST_TYPE=movie INGEST_MAX_PAGES=7000 node scripts/ingest-la-movie.mjs",
-    "ingest:series:7000": "cross-env INGEST_FULL=1 INGEST_TYPE=series INGEST_MAX_PAGES=7000 node scripts/ingest-la-movie.mjs",
     "ingest:tmdb": "node scripts/ingest-tmdb.mjs",
     "ingest:tmdb:movie:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=movie node scripts/ingest-tmdb.mjs",
     "ingest:tmdb:series:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=series node scripts/ingest-tmdb.mjs",
@@ -25,7 +20,6 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "axios": "^1.13.6",
-    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
@@ -36,7 +30,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.5.0",
-    "uuid": "^13.0.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

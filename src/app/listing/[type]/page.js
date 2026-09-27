@@ -5,8 +5,8 @@ export async function generateMetadata({ params }) {
   const isMovie = type === 'peliculas';
   const title = isMovie ? 'Explorar Películas' : 'Explorar Series';
   const description = isMovie 
-    ? 'Descubre las mejores películas en HD. Acción del mejor nivel en streaming-Sntx.'
-    : 'Todas tus series favoritas en un solo lugar. Temporadas completas y estrenos.';
+    ? 'Explora el catálogo de películas y mira sus tráilers oficiales en streaming-Sntx.'
+    : 'Explora el catálogo de series: tráilers, temporadas y episodios.';
 
   return {
     title,

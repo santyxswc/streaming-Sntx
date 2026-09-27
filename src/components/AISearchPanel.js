@@ -142,7 +142,7 @@ export default function AISearchPanel({ onResultNavigate, autoFocus = false, cla
                 onClick={() => onResultNavigate?.()}
                 className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl font-black uppercase tracking-widest text-[11px] hover:bg-gray-200 transition-all"
               >
-                <Play size={14} fill="currentColor" /> Ver ahora
+                <Play size={14} fill="currentColor" /> Ver tráiler
               </Link>
               <Link
                 href={result.link}

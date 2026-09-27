@@ -37,7 +37,21 @@ function rowToItem(row) {
     country: row.country,
     trailer: row.trailer,
     type: row.media_type === "series" ? "series" : "movie",
+    externalIds: extractExternalIds(row, payload),
     scrapedAt: scraped instanceof Date ? scraped.toISOString() : scraped,
+  };
+}
+
+/**
+ * IDs de TMDB / IMDb / TheTVDB que cada fuente de ingesta guarda en el payload
+ * con nombres distintos. Solo lectura: permite resolver tráilers sin tocar la BD.
+ */
+function extractExternalIds(row, payload) {
+  const tmdbFromId = typeof row.id === "string" && /^tmdb-(\d+)$/.exec(row.id)?.[1];
+  return {
+    tmdb: tmdbFromId || payload.tmdbId || payload.tmdb_id || null,
+    imdb: payload.externals?.imdb || payload.imdbId || payload.imdb_id || null,
+    tvdb: payload.externals?.thetvdb || payload.tvdbId || null,
   };
 }
 
