@@ -1,4 +1,4 @@
-# Catálogo dual: Firebase + Neon (PostgreSQL)
+# Catálogo: Neon (PostgreSQL) y Firebase
 
 ## Inicio rápido con Neon (CLI)
 
@@ -18,10 +18,10 @@ Tras tener la connection string, define `DATABASE_URL` (o `NEON_DATABASE_URL`) y
 |----------|-------------|
 | `CATALOG_PROVIDER` | `firebase` (por defecto) o `neon` |
 | `DATABASE_URL` o `NEON_DATABASE_URL` | Cadena de conexión Postgres (Neon); **solo servidor**, nunca `NEXT_PUBLIC_*` |
-| `INGEST_FULL` | `1` para modo full (todas las páginas hasta vacío) |
-| `INGEST_TYPE` | `movie` o `series` (útil en PowerShell donde `--type` puede no propagarse) |
+| `TMDB_API_KEY` | Necesaria para `ingest:tmdb` y para resolver tráilers |
+| `INGEST_SECRET_KEY` | Protege `POST /api/ingest/tmdb` (cabecera `x-api-key`); en `next dev` se usa un valor de desarrollo |
 
-Con `CATALOG_PROVIDER=neon`, las rutas `/api/media*`, búsqueda, recomendaciones, IA y `/api/scrape` usan Postgres.
+Con `CATALOG_PROVIDER=neon`, las rutas `/api/media*`, búsqueda, recomendaciones, tráilers e IA usan Postgres a través de `src/server/catalog/catalogRepository.js`.
 
 ## Migración inicial
 
@@ -34,53 +34,26 @@ npm run migrate:neon
 
 (Requiere `DATABASE_URL` en `.env.local`.) Si tienes [PostgreSQL](https://www.postgresql.org/download/) instalado con `psql` en el PATH, también puedes usar: `psql "$DATABASE_URL" -f db/migrations/001_init_neon_catalog.sql` (en PowerShell carga antes las variables o usa el comando desde Git Bash).
 
-3. Poblar datos vía scraping de **lamovie.org** (el scraper no lee Firestore: siempre trae del API público y hace upsert en la base activa, así recuperas el mismo catálogo por **slug** que antes si la fuente coincide).
+3. Poblar el catálogo con los scripts de ingesta (hacen upsert por `id`, así que se pueden re-ejecutar sin duplicar):
 
-Con el servidor en marcha (`npm run dev`), `.env.local` ya con `CATALOG_PROVIDER=neon` y `DATABASE_URL`:
-
-**Catálogo completo** (una petición por página hasta que no haya más; evita el límite de 30 páginas por defecto):
+**TMDB** (películas y series; pasa por `POST /api/ingest/tmdb`, así que necesita el servidor en marcha con `npm run dev`):
 
 ```bash
-# Películas (bash/Git Bash)
-npm run ingest:la-movie -- --type=movie --full
-
-# Series (bash/Git Bash)
-npm run ingest:la-movie -- --type=series --full
+npm run ingest:tmdb -- --type=movie --max-pages=20
+npm run ingest:tmdb -- --type=series --full
+npm run ingest:tmdb -- --type=movie --full --year=2024   # TMDB limita a 500 páginas por consulta
 ```
 
-**PowerShell / Windows** (los arg `--type` y `--full` a veces no llegan; usar estos scripts):
+En PowerShell, donde los argumentos `--type`/`--full` a veces no llegan, usa los atajos `npm run ingest:tmdb:movie:full`, `ingest:tmdb:series:full` y sus variantes `:es:full` (solo idioma original español).
 
-```powershell
-# Películas (modo full, hasta página vacía)
-npm run ingest:movie:full
-
-# Series (modo full, hasta página vacía)
-npm run ingest:series:full
-```
-
-O con variables de entorno:
-```powershell
-$env:INGEST_FULL="1"; $env:INGEST_TYPE="series"; npm run ingest:la-movie
-```
-
-Para continuar desde una página concreta: `--start-page=31` o `$env:INGEST_START_PAGE="31"`.
-
-**Solo N páginas** (pruebas):
+**TVmaze** (series; conecta directo a `DATABASE_URL`, no necesita el servidor):
 
 ```bash
-npm run ingest:la-movie -- --type=movie --max-pages=15
-npm run ingest:la-movie -- --type=series --max-pages=15
-# PowerShell: $env:INGEST_TYPE="series"; $env:INGEST_MAX_PAGES="15"; npm run ingest:la-movie
+npm run ingest:tvmaze -- --pages=5
+npm run ingest:tvmaze:full            # retoma automáticamente desde .ingest-state/
 ```
 
-**API `POST /api/scrape`** (header `x-api-key`):
-
-| Campo | Efecto |
-|--------|--------|
-| `all: true` o `fullCatalog: true` | En **una sola petición** recorre desde `page` hasta la última página reportada (máx. `SCRAPER_MAX_PAGES_PER_REQUEST`, por defecto 5000). Puede tardar mucho o cortarse por timeout en Vercel; en local suele ir bien. |
-| `page`, sin `all` | Solo esa página (~50 ítems). |
-
-La respuesta incluye `totalPages`, `pagesProcessed`, `count`.
+Para contar filas por tipo: `node scripts/count-media.mjs`.
 
 ## Catálogo con Firebase (producción)
 
@@ -102,15 +75,13 @@ firebase deploy --only firestore:indexes
 1. Validar listados, filtros, detalle y búsqueda con datos reales en staging.
 2. **Neon**: En Vercel, `CATALOG_PROVIDER=neon` y `DATABASE_URL` (secret).
 3. **Firebase**: `CATALOG_PROVIDER=firebase` y `FIREBASE_SERVICE_ACCOUNT`; `firebase deploy --only firestore:indexes`.
-4. Mantener Firebase para Auth, favoritos y watch parties hasta migrarlos.
+4. Mantener Firebase para Auth y favoritos.
 
-## Reproductor (embeds) y CSP
+## Tráilers
 
-Los enlaces de reproducción **no se guardan en Neon**: el detalle sigue usando `numeric_id` (ID del post en lamovie.org) y `/api/media/player` consulta la API pública de lamovie.org para obtener `embeds`.
+Los tráilers **no requieren columnas nuevas ni escrituras**: `src/server/trailers/trailerService.js` usa el tráiler guardado en `media.trailer` si existe y, si no, lo resuelve contra TMDB con el identificador que cada ingesta dejó en `payload` (id TMDB, `externals.imdb` / `externals.thetvdb` de TVmaze) o, como último recurso, por título y año. El resultado se cachea en memoria y en el CDN.
 
-- Si `numeric_id` quedó vacío pero el **JSON completo** está en la columna `payload` del ingest, el código usa `payload.numericId` / `payload._id` como respaldo.
-- Si en el iframe ves **«This content is blocked. Contact the site owner…»**, suele ser la **Content-Security-Policy** bloqueando el dominio del embed. En este proyecto la CSP está en `next.config.mjs` (`frame-src 'self' https: blob:`) para permitir iframes HTTPS de cualquier servidor de video.
-- **Firebase Analytics / gtag** cargan scripts desde `googletagmanager.com` y `google-analytics.com`; la misma CSP incluye esos orígenes en `script-src` y `connect-src` para que no se bloqueen.
+La CSP de `next.config.mjs` solo permite iframes de YouTube (`youtube-nocookie.com`) y de Firebase Auth.
 
 ## Checklist de paridad
 
@@ -120,4 +91,5 @@ Los enlaces de reproducción **no se guardan en Neon**: el detalle sigue usando 
 - [ ] `/api/media/search`
 - [ ] `/api/media/recommendations`
 - [ ] `/api/ai/search`
-- [ ] `/api/scrape` escribe en Neon
+- [ ] `/api/media/trailer` resuelve tráilers
+- [ ] `/api/ingest/tmdb` escribe en Neon

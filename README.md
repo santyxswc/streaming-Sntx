@@ -1,176 +1,177 @@
-# streaming-Sntx — plataforma de streaming (Next.js)
+# streaming-Sntx
 
-streaming-Sntx es, en esencia, un **clon de la experiencia de Netflix**: misma lógica de presentación (filas, detalle, reproductor, búsqueda) y una capa visual cinematográfica propia (paleta violeta/cian, glassmorphism, tipografía Sora/Plus Jakarta Sans/JetBrains Mono) pensada para recordar a ese tipo de plataformas, que es justo lo que suele atraer la curiosidad. No es un producto oficial ni un cliente de Netflix: el catálogo y las fichas se **rellenan con datos obtenidos por scraping/ingest** (incluidos enlaces a streams de terceros para películas y series) y viven en tu propia base (Firebase/Neon según configuración).
+Catálogo cinematográfico de **más de 100.000 películas y series** para descubrir títulos a través de sus **tráilers oficiales**, con búsqueda en lenguaje natural asistida por IA, recomendaciones, listas personales y chat por título. Incluye una app web (Next.js) y un cliente de escritorio (Tauri) que consumen la misma API.
 
-Este proyecto nació como fork de **Luvana** (código base MIT); el aviso de autoría original y la atribución requerida al reutilizarlo están en [NOTICE.md](NOTICE.md).
+> streaming-Sntx no aloja ni enlaza contenido protegido: solo reproduce tráilers públicos de YouTube a través del reproductor embebido oficial.
 
-Este repositorio se publica para **experimentación y aprendizaje** — ver cómo encajar un front “tipo streaming premium” con Next.js App Router, auth con Firebase, backend en rutas API, chat opcional en Neon y app de escritorio con Tauri.
+## Funcionalidades
 
-**Aviso:** el despliegue, el origen de los enlaces, el scraping y el cumplimiento legal (derechos de contenido, términos de sitios de terceros, etc.) son **responsabilidad de quien instale o despliegue** el proyecto. No se incluyen credenciales ni datos de producción en el código.
+- **Tráilers oficiales**: cada título resuelve sus tráilers bajo demanda contra TMDB (preferencia: oficial en español → inglés → otros), con selector de versión y modo cine.
+- **Catálogo de +113k títulos** en PostgreSQL (Neon), ingerido desde TMDB y TVmaze, con filtros por género, año y país, paginación por cursor y búsqueda tolerante a acentos.
+- **Búsqueda con IA**: describe una escena, actor o época y el asistente (DeepSeek) identifica el título y lo cruza con el catálogo.
+- **Tendencias** basadas en las vistas del propio catálogo, con estrenos populares como respaldo.
+- **Mi lista** sincronizada en Firestore para usuarios autenticados (Firebase Auth).
+- **Chat por título** con moderación, nombres de usuario generados y límites de uso.
+- **Cliente de escritorio** (Tauri + Vite + React + TypeScript).
 
-## Requisitos
+## Stack
 
-- **Node.js** 20+ (recomendado; la versión exacta puede alinearse con la de Vercel).
-- Cuenta **Firebase** (Auth + Firestore para el flujo cliente; service account para las API del servidor).
-- Opcional: proyecto **Neon** (Postgres) si usas el catálogo o el chat vía `CATALOG_PROVIDER` / `CHAT_PROVIDER` (ver [docs/CATALOG_NEON.md](docs/CATALOG_NEON.md)).
-- Opcional: **DeepSeek** API key para funcionalidades que llaman a IA ([src/lib/deepseek.js](src/lib/deepseek.js)).
+| Capa | Tecnología |
+|------|------------|
+| Web | Next.js 16 (App Router), React 19, Tailwind CSS 4, Framer Motion, Zustand |
+| API | Next.js Route Handlers (Node.js runtime) |
+| Datos | PostgreSQL (Neon) · Firestore · proveedores intercambiables |
+| Integraciones | TMDB, TVmaze, OMDb, DeepSeek, YouTube embed |
+| Auth | Firebase Auth + Firebase Admin (verificación de tokens en servidor) |
+| Escritorio | Tauri 2, Vite, TypeScript |
+| Deploy | Vercel |
 
-## Instalación local (web)
+## Arquitectura
+
+Monolito modular por capas: la interfaz se organiza por **dominio funcional** y todo el código de servidor vive aislado en `src/server/`, detrás de repositorios con proveedores intercambiables.
+
+```mermaid
+flowchart LR
+  subgraph clients [Clientes]
+    Web[Web · Next.js]
+    Desktop[Escritorio · Tauri]
+  end
+  subgraph api [src/app/api · Route Handlers]
+    Media["/api/media/*"]
+    Trailer["/api/media/trailer"]
+    AI["/api/ai/search"]
+    Chat["/api/chat/*"]
+  end
+  subgraph server [src/server]
+    CatalogRepo[catalogRepository]
+    TrailerSvc[trailerService]
+    ChatRepo[chatRepository]
+    Integrations[integrations: TMDB · OMDb · DeepSeek]
+  end
+  subgraph data [Datos]
+    Neon[(Neon PostgreSQL)]
+    Firestore[(Firestore)]
+  end
+  Web --> Media & Trailer & AI & Chat
+  Desktop --> Media & Trailer
+  Media --> CatalogRepo
+  AI --> CatalogRepo & Integrations
+  Trailer --> TrailerSvc --> CatalogRepo & Integrations
+  Chat --> ChatRepo
+  CatalogRepo --> Neon & Firestore
+  ChatRepo --> Neon & Firestore
+```
+
+### Estructura
+
+```text
+src/
+├── app/                 Rutas: páginas y API Route Handlers (capa HTTP delgada)
+├── features/            Código de cliente agrupado por dominio
+│   ├── ai-search/       Búsqueda en lenguaje natural
+│   ├── auth/            Modal y store de autenticación
+│   ├── catalog/         Hero, filas, tarjetas, compartir, store del catálogo
+│   ├── chat/            Chat por título y panel de moderación
+│   ├── donations/       Botón, franja y modal de donaciones
+│   ├── favorites/       Store de "Mi lista" (localStorage + Firestore)
+│   └── trailers/        Reproductor de tráilers y hook useTrailers
+├── components/          UI compartida: layout (Navbar, Footer) y primitivas
+├── server/              Solo servidor (protegido con `server-only`)
+│   ├── catalog/         Repositorio + proveedores neon / firebase / tmdb / demo
+│   ├── chat/            Repositorio + proveedores, autorización de moderación
+│   ├── trailers/        Resolución y caché de tráilers
+│   ├── integrations/    Clientes TMDB, OMDb, DeepSeek
+│   ├── db/              Clientes Postgres y Firebase Admin
+│   ├── http/            Rate limiting
+│   └── config/          Selección de proveedores por entorno
+└── lib/                 Utilidades isomórficas (youtube, géneros, firebase cliente)
+db/migrations/           Esquema SQL e índices de Neon
+scripts/                 Ingesta (TMDB, TVmaze), migraciones y utilidades
+desktop/                 Cliente de escritorio Tauri
+docs/                    Guías de Neon, Firebase y moderación
+```
+
+**Decisiones clave**
+
+- **Repositorios con proveedores intercambiables**: las rutas solo conocen `catalogRepository` / `chatRepository`; el backend concreto (Neon, Firestore, TMDB en vivo o datos demo) se elige con `CATALOG_PROVIDER` / `CHAT_PROVIDER`. El proyecto arranca sin ninguna credencial en modo `demo`.
+- **Límite cliente/servidor explícito**: cada módulo de `src/server/` importa `server-only`, así que importarlo desde un componente de cliente rompe el build en lugar de filtrar secretos al navegador.
+- **Tráilers sin escribir en la base**: solo ~7% del catálogo trae el tráiler guardado. `trailerService` lo resuelve con el mejor identificador disponible (id TMDB → IMDb/TheTVDB del payload de ingesta → búsqueda por título y año), lo cachea en memoria (TTL corto para resultados vacíos) y en el CDN vía `Cache-Control`.
+- **Protección de la API**: rate limiting por IP y endpoint, verificación de ID tokens de Firebase en servidor y CSP que solo permite iframes de YouTube y Firebase Auth.
+
+## Puesta en marcha
+
+Requisitos: **Node.js 20+**. Todo lo demás es opcional: sin variables de entorno la app funciona con el catálogo demo.
 
 ```bash
 git clone https://github.com/santyxswc/streaming-Sntx.git
 cd streaming-Sntx
 npm install
-cp .env.example .env.local
-# Edita .env.local con tus valores (Firebase, etc.)
-npm run dev
+cp .env.example .env.local   # rellena lo que vayas a usar
+npm run dev                  # http://localhost:3000
 ```
 
-Abre [http://localhost:3000](http://localhost:3000). Las variables se documentan en [`.env.example`](.env.example) y en la tabla de despliegue más abajo.
-
-### Base de datos Neon (migraciones)
-
-Si usas Postgres para catálogo y/o chat:
+### Catálogo en Neon
 
 ```bash
-npm run migrate:neon
+npm run migrate:neon                                   # aplica db/migrations/
+npm run ingest:tmdb -- --type=movie --max-pages=20     # películas desde TMDB
+npm run ingest:tvmaze -- --pages=5                     # series desde TVmaze
 ```
 
-Aplica los SQL de [`db/migrations/`](db/migrations/). Detalles: [docs/CATALOG_NEON.md](docs/CATALOG_NEON.md).
+Más detalle en [docs/CATALOG_NEON.md](docs/CATALOG_NEON.md).
 
-## Cómo está construido
+### Escritorio
 
-| Ruta | Contenido |
-|------|------------|
-| [`src/app/`](src/app/) | App Router: páginas, layout y **API Routes** bajo `src/app/api/`. |
-| [`src/lib/`](src/lib/) | Cliente Firebase, Neon SQL, chat, DeepSeek, moderación, etc. |
-| [`src/services/`](src/services/) | Lógica de negocio (scraper, acceso a datos). |
-| [`db/migrations/`](db/migrations/) | Esquema SQL para Neon. |
-| [`scripts/`](scripts/) | Ingesta, migraciones, utilidades. |
-| [`desktop/luvana-desktop/`](desktop/luvana-desktop/) | App **Tauri + Vite + React** que consume la misma API. |
-| [`docs/`](docs/) | Neon, service account, moderación de chat, etc. |
-
-Flujo resumido:
-
-```mermaid
-flowchart LR
-  subgraph client [Clientes]
-    Web[Next.js web]
-    Desktop[Tauri app]
-  end
-  subgraph api [Next API routes]
-    Media["/api/media..."]
-    Chat["/api/chat/"]
-    Scrape["/api/scrape"]
-  end
-  subgraph data [Datos]
-    Firestore[Firestore]
-    Neon[Neon PostgreSQL]
-  end
-  Web --> Media
-  Desktop --> Media
-  Web --> Chat
-  Scrape --> Neon
-  Media --> Firestore
-  Media --> Neon
-  Chat --> Neon
+```bash
+cd desktop
+cp .env.example .env         # VITE_API_URL + VITE_FIREBASE_*
+npm install
+npm run tauri dev
 ```
 
-### Scraping e ingesta del catálogo
+Ver [desktop/README.md](desktop/README.md).
 
-El front “tipo Netflix” consume un catálogo que tú rellenas; la pieza que **obtiene metadatos y enlaces de reproducción** vive en el servidor:
+## Variables de entorno
 
-| Pieza | Rol |
-|--------|-----|
-| [`src/services/scraper.js`](src/services/scraper.js) | Lógica de scraping: descarga y normaliza datos de títulos y enlaces a streams. |
-| [`src/app/api/scrape/route.js`](src/app/api/scrape/route.js) | `POST /api/scrape`: recibe el trabajo de scrape (protegido con `x-api-key` / `SCRAPE_SECRET_KEY`) y persiste en tu base. |
-| [`scripts/ingest-la-movie.mjs`](scripts/ingest-la-movie.mjs) | Script de ingesta que llama a la API de scrape (útil en local o contra un despliegue). |
+Todas están listadas en [`.env.example`](.env.example). Las principales:
 
-En [docs/CATALOG_NEON.md](docs/CATALOG_NEON.md) tienes el detalle de `POST /api/scrape` (cabecera `x-api-key`, tipos y límites) y el flujo con Neon. Sin datos ingeridos, la UI puede verse vacía: configura el entorno, la base y ejecuta el scrape o el script de ingest según te convenga.
+| Variable | Uso |
+|----------|-----|
+| `CATALOG_PROVIDER` | `neon` · `firebase` · `tmdb` · `demo` |
+| `DATABASE_URL` | Conexión PostgreSQL (solo servidor) |
+| `TMDB_API_KEY` | Resolución de tráilers, fichas y búsqueda externa |
+| `DEEPSEEK_API_KEY` | Búsqueda con IA |
+| `NEXT_PUBLIC_FIREBASE_*` | Auth y favoritos en el cliente |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | Verificación de tokens en servidor ([guía](docs/FIREBASE_SERVICE_ACCOUNT.md)) |
+| `CHAT_PROVIDER`, `CHAT_MODERATION_SECRET`, `CHAT_ADMIN_UIDS` | Chat y moderación ([guía](docs/CHAT_MODERATION.md)) |
+| `INGEST_SECRET_KEY` | Protege `POST /api/ingest/tmdb` (cabecera `x-api-key`) |
 
-## Aplicación de escritorio
+## Scripts
 
-Cliente opcional (Rust/Tauri + Vite). Instrucciones: [desktop/luvana-desktop/README.md](desktop/luvana-desktop/README.md). Copia `desktop/luvana-desktop/.env.example` y define al menos `VITE_API_URL` y las variables `VITE_FIREBASE_*` alineadas con el mismo proyecto Firebase que la web.
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` / `npm start` | Build y servidor de producción |
+| `npm run lint` | ESLint |
+| `npm run migrate:neon` | Migraciones SQL |
+| `npm run ingest:tmdb` | Ingesta desde TMDB (variantes `:movie:full`, `:series:full`, `:es:full`) |
+| `npm run ingest:tvmaze` | Ingesta de series desde TVmaze (`:full` para el catálogo completo) |
 
-## Despliegue (Vercel)
+## API
 
-El proyecto está orientado a **Vercel** (`@vercel/analytics` en el layout). Configura las variables en **Project → Settings → Environment Variables**.
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /api/media` | Listado paginado con filtros y orden |
+| `GET /api/media/detail` | Ficha de un título |
+| `GET /api/media/trailer` | Tráilers de YouTube de un título |
+| `GET /api/media/episodes` | Temporadas y episodios de una serie |
+| `GET /api/media/search` · `/multi-search` | Búsqueda en catálogo y TMDB |
+| `GET /api/media/recommendations` | Más títulos del mismo tipo |
+| `GET /api/media/metadata` | Años y países disponibles para filtros |
+| `POST /api/ai/search` | Identificación de títulos por descripción |
+| `/api/chat/*` | Mensajes, perfiles y moderación |
+| `GET /api/health/db` | Estado del proveedor de catálogo |
 
-| Variable | Descripción |
-| :--- | :--- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | API Key de Firebase (cliente) |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Auth domain |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Project ID |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Storage bucket |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | App ID |
-| `NEXT_PUBLIC_SITE_URL` | URL canónica (OG/metadata); en un fork usa tu dominio. Por defecto en código: referencia a despliegue de ejemplo. |
-| `NEXT_PUBLIC_CAFECITO_USERNAME` | Opcional: usuario Cafecito para donaciones. |
-| `FIREBASE_SERVICE_ACCOUNT` o `FIREBASE_SERVICE_ACCOUNT_BASE64` | Service account para verificar tokens en servidor. Mismo `project_id` que `NEXT_PUBLIC_*`. Ver [docs/FIREBASE_SERVICE_ACCOUNT.md](docs/FIREBASE_SERVICE_ACCOUNT.md). |
-| `DEEPSEEK_API_KEY` | API de DeepSeek. |
-| `SCRAPE_SECRET_KEY` | **Obligatoria en producción** para `POST /api/scrape` (cabecera `x-api-key`). Con `next dev` puedes no definirla (solo entorno de desarrollo). |
-| `CATALOG_PROVIDER` | `firebase` o `neon` (si defines `DATABASE_URL` sin `CATALOG`, puede inferirse Neon: ver `src/lib/catalogEnv.js`). |
-| `DATABASE_URL` o `NEON_DATABASE_URL` | Conexión Postgres (solo servidor). |
-| `CHAT_PROVIDER` | `neon` (por defecto) o `firebase`. |
-| `CHAT_MODERATION_SECRET` / `CHAT_ADMIN_UIDS` | Moderación: [docs/CHAT_MODERATION.md](docs/CHAT_MODERATION.md). |
+## Licencia
 
-- **Build:** `npm run build` — salida: `.next`.
-- Tras añadir tablas de chat en Neon, ejecuta `npm run migrate:neon` si aplica.
-
-### Reglas de Firestore (ejemplo: lectura pública solo al catálogo)
-
-Ajusta a tu política. Ejemplo mínimo para **solo lectura** en listados de películas/series y denegar el resto:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /movies/{movie} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /series/{serie} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-```
-
-## Comandos útiles
-
-| Comando | Uso |
-|--------|-----|
-| `npm run dev` | Servidor de desarrollo. |
-| `npm run build` / `npm run start` | Producción local. |
-| `npm run lint` | ESLint. |
-| `npm run migrate:neon` | Migraciones SQL a Neon. |
-| `npm run ingest:la-movie` | Ingesta vía `POST /api/scrape` (lee `.env.local`; ver script). |
-
-## Documentación adicional
-
-- [docs/CATALOG_NEON.md](docs/CATALOG_NEON.md) — catálogo en Neon, scrape, `DATABASE_URL`.
-- [docs/FIREBASE_SERVICE_ACCOUNT.md](docs/FIREBASE_SERVICE_ACCOUNT.md) — credenciales de administrador.
-- [docs/CHAT_MODERATION.md](docs/CHAT_MODERATION.md) — panel de moderación y secretos.
-- [SECURITY.md](SECURITY.md) — reporte responsable de vulnerabilidades.
-- [LICENSE](LICENSE) — licencia MIT.
-- [NOTICE.md](NOTICE.md) — aviso de autoría y atribución requerida al reutilizar el proyecto.
-
-## Checklist antes de publicar en GitHub
-
-- Revisar el **historial de Git** por `.env` o JSON de service account cometidos por error (herramientas como [gitleaks](https://github.com/gitleaks/gitleaks) o auditoría manual); si hubo fuga, **rota** las claves.
-- Añade **topics** al repo, por ejemplo: `nextjs`, `react`, `firebase`, `neon`, `postgresql`, `tauri`, `vercel`, `streaming`.
-- Comprueba que no queden **secretos en Issues, Actions ni foros** del proyecto.
-
-## Tecnologías (resumen)
-
-- **Web:** Next.js (App Router), React, Tailwind CSS, Framer Motion, Zustand, Lucide.
-- **Auth / datos:** Firebase; Postgres opcional vía **Neon**; integración con **DeepSeek** para IA.
-- **Escritorio:** Tauri, Vite, TypeScript (carpeta `desktop/`).
-
----
-
-© 2026 [santyxswc](https://github.com/santyxswc). Proyecto publicado bajo [licencia MIT](LICENSE) — ver también [NOTICE.md](NOTICE.md) para la atribución requerida al reutilizarlo.
+[MIT](LICENSE) © santyxswc

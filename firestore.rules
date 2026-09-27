@@ -16,15 +16,6 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Reglas para Watch Party (Cine Compartido)
-    match /parties/{partyId} {
-      // Cualquier usuario puede crear una sala y leerla si tiene el ID único
-      allow read, create: if true;
-      // Solo permitimos actualizar campos específicos de sincronización para evitar borrados accidentales
-      allow update: if request.resource.data.mediaId == resource.data.mediaId;
-      allow delete: if false;
-    }
-
     // Regla por defecto: bloquea todo lo demás
     match /{document=**} {
       allow read, write: if false;

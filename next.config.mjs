@@ -8,7 +8,9 @@ const nextConfig = {
       "https://apis.google.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "img-src 'self' data: https:; " +
-      "frame-src 'self' https: blob:; " +
+      // Solo se embeben tráilers de YouTube; Firebase Auth necesita sus iframes.
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com " +
+      "https://*.firebaseapp.com https://apis.google.com https://accounts.google.com; " +
       "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.gstatic.com wss://*.firebaseio.com " +
       "https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com " +
       "https://*.googletagmanager.com https://www.google.com https://stats.g.doubleclick.net;";

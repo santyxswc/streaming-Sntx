@@ -34,13 +34,13 @@ if (existsSync(envPath)) {
 
 const BASE = process.env.INGEST_BASE_URL || 'http://localhost:3000';
 const isLocalIngest = /localhost|127\.0\.0\.1/.test(BASE);
-let KEY = process.env.SCRAPE_SECRET_KEY;
+let KEY = process.env.INGEST_SECRET_KEY || process.env.SCRAPE_SECRET_KEY;
 if (!KEY) {
   if (isLocalIngest) {
-    KEY = 'luv-dev-secret-123';
+    KEY = 'dev-ingest-secret';
   } else {
     console.error(
-      'SCRAPE_SECRET_KEY es obligatoria cuando INGEST_BASE_URL apunta a un host distinto de localhost.'
+      'INGEST_SECRET_KEY es obligatoria cuando INGEST_BASE_URL apunta a un host distinto de localhost.'
     );
     process.exit(1);
   }

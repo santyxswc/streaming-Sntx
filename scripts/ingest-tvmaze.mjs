@@ -1,6 +1,6 @@
 /**
  * Ingesta de series (y animes) desde TVmaze directamente hacia Neon/Postgres.
- * A diferencia de ingest-la-movie.mjs / ingest-tmdb.mjs, este script NO pasa por
+ * A diferencia de ingest-tmdb.mjs, este script NO pasa por
  * el servidor Next.js: conecta directo a `DATABASE_URL` con `postgres` e inserta
  * en la tabla `media` (mismo esquema que db/migrations/001_init_neon_catalog.sql).
  *
