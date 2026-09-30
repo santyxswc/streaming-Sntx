@@ -3,6 +3,7 @@ import { getTmdbTvShow, getTmdbSeasonEpisodes } from '@/server/integrations/tmdb
 import { getTvmazeEpisodes } from '@/server/integrations/tvmaze';
 import { getCatalogProvider } from '@/server/config/catalogEnv';
 import { getDemoEpisodes } from '@/server/catalog/providers/demoCatalog';
+import { stripHtml } from '@/lib/text.mjs';
 
 /**
  * Temporadas y episodios de una serie. Cada resolvedor declara qué ids sabe
@@ -13,7 +14,6 @@ import { getDemoEpisodes } from '@/server/catalog/providers/demoCatalog';
  * o `null` si ninguna fuente conoce la serie.
  */
 
-const stripHtml = (html) => (html ? html.replace(/<[^>]*>/g, '').trim() : '');
 
 export const tmdbResolver = {
   match: (showId) => /^tmdb-(\d+)$/.exec(showId)?.[1] ?? null,

@@ -3,6 +3,7 @@ import { searchCatalog } from "@/server/catalog/catalogRepository";
 import { searchTmdb, isTmdbConfigured } from "@/server/integrations/tmdb";
 import { searchOmdb, isOmdbConfigured } from "@/server/integrations/omdb";
 import { rateLimit } from "@/server/http/rateLimit";
+import { sanitizeForLog } from "@/lib/text.mjs";
 
 export const runtime = "nodejs";
 export const revalidate = 1800;
@@ -65,11 +66,11 @@ export async function GET(request) {
       searchTmdb(query)
         .then((results) => {
           if (results.length > 0) sources.push("tmdb");
-          else console.warn(`[multi-search] TMDB devolvió 0 resultados para "${query}" (revisa logs de [tmdb] arriba: auth/timeout/formato)`);
+          else console.warn('[multi-search] TMDB devolvió 0 resultados para "%s" (revisa logs de [tmdb] arriba: auth/timeout/formato)', sanitizeForLog(query));
           return results; // already have source: 'tmdb'
         })
         .catch((err) => {
-          console.error(`[multi-search] TMDB error para "${query}":`, err.message, err.stack?.split("\n")[1] || "");
+          console.error('[multi-search] TMDB error para "%s":', sanitizeForLog(query), err.message, err.stack?.split("\n")[1] || "");
           return [];
         })
     );

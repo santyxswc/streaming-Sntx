@@ -84,7 +84,22 @@ export async function POST(request) {
       );
     }
 
-    const targetPage = page || 1;
+    // El cuerpo es entrada externa: `page` y `maxPages` deben ser enteros positivos. Además de
+    // evitar NaN en el bucle, impide que texto arbitrario llegue a los logs.
+    const isPositiveInt = (n) => Number.isInteger(n) && n >= 1;
+    if (page !== undefined && !isPositiveInt(page)) {
+      return NextResponse.json(
+        { success: false, error: 'page debe ser un entero positivo' },
+        { status: 400 }
+      );
+    }
+    if (maxPagesBody !== undefined && !isPositiveInt(maxPagesBody)) {
+      return NextResponse.json(
+        { success: false, error: 'maxPages debe ser un entero positivo' },
+        { status: 400 }
+      );
+    }
+    const targetPage = page ?? 1;
     const fullRun = all === true || fullCatalog === true;
     const maxPagesPerRequest = Math.min(maxPagesBody ?? DEFAULT_MAX_PAGES_PER_REQUEST, 500);
 
@@ -110,7 +125,7 @@ export async function POST(request) {
       totalPages = result.totalPages || 1;
 
       if (!result.items.length) {
-        console.log(`[ingest-tmdb] Sin items en página ${currentPage} (${type})`);
+        console.log('[ingest-tmdb] Sin items en página %d (%s)', currentPage, type);
         break;
       }
       totalRaw += result.items.length;
@@ -129,8 +144,8 @@ export async function POST(request) {
       totalDuplicates += duplicatesThisPage;
 
       console.log(
-        `[ingest-tmdb] ${type} página ${currentPage}/${totalPages}: ${result.items.length} items (` +
-          `${newItems.length} nuevos, ${duplicatesThisPage} ya existían)`
+        '[ingest-tmdb] %s página %d/%d: %d items (%d nuevos, %d ya existían)',
+        type, currentPage, totalPages, result.items.length, newItems.length, duplicatesThisPage
       );
 
       if (newItems.length) {

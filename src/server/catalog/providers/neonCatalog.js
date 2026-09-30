@@ -1,5 +1,6 @@
 import 'server-only';
 import { getNeonSql } from "@/server/db/neonSql";
+import { isTvmazeUrl } from "@/lib/text.mjs";
 
 function rowToItem(row) {
   if (!row) return null;
@@ -20,7 +21,7 @@ function rowToItem(row) {
   // numérico "pelado" en numeric_id, pero /api/media/episodes y /api/media/player
   // solo saben enrutar a TVmaze cuando el id viene prefijado con `tvmaze-`.
   // Lo detectamos por el dominio del href que el propio ingest guarda.
-  if (numericId != null && typeof row.href === "string" && /tvmaze\.com/i.test(row.href)) {
+  if (numericId != null && isTvmazeUrl(row.href)) {
     numericId = `tvmaze-${numericId}`;
   }
   return {

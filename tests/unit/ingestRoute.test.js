@@ -58,6 +58,24 @@ describe('POST /api/ingest/tmdb', () => {
     }
   });
 
+  it.each([
+    ['page como texto con saltos de línea', { type: 'movie', page: '1\n[FAKE] línea falsa' }],
+    ['page negativo', { type: 'movie', page: -3 }],
+    ['page decimal', { type: 'movie', page: 1.5 }],
+    ['page cero', { type: 'movie', page: 0 }],
+    ['maxPages como texto', { type: 'movie', maxPages: '500' }],
+    ['maxPages negativo', { type: 'movie', maxPages: -1 }],
+  ])('rechaza con 400 %s', async (_label, body) => {
+    const res = await call({ key: 'clave-correcta', body });
+    expect(res.status).toBe(400);
+  });
+
+  it('acepta enteros positivos en page y maxPages (como envía el script de ingesta)', async () => {
+    const res = await call({ key: 'clave-correcta', body: { type: 'movie', page: 3, maxPages: 2 } });
+    // Supera la validación; el 500 viene de la base de datos simulada, no del 400 de entrada.
+    expect(res.status).toBe(500);
+  });
+
   it('responde 503 genérico si no hay clave configurada, sin nombrar la variable', async () => {
     delete process.env.INGEST_SECRET_KEY;
     const res = await call({ key: 'lo-que-sea' });

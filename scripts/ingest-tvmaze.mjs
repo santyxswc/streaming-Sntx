@@ -31,6 +31,7 @@ import postgres from 'postgres';
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { stripHtml } from '../src/lib/text.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
@@ -123,9 +124,8 @@ function normalizeTitle(str) {
     .trim();
 }
 
-function stripHtml(html) {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+function cleanHtml(html) {
+  return stripHtml(html).replace(/\s+/g, ' ');
 }
 
 function mapShowToMedia(show, existingIds) {
@@ -144,7 +144,7 @@ function mapShowToMedia(show, existingIds) {
     media_type: 'series',
     title,
     original_title: title,
-    overview: stripHtml(show.summary),
+    overview: cleanHtml(show.summary),
     href: show.url || '',
     image,
     backdrop: image,
