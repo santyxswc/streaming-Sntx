@@ -10,10 +10,10 @@
 | Severidad | Cantidad |
 |---|---|
 | Alta | 0 |
-| Media | 4 |
+| Media | 2 |
 | Baja | 5 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03) y abuso de coste del buscador con IA (SEC-04).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07) y sondeo de la base de datos (SEC-08).
 
 ## Corregido
 
@@ -25,19 +25,13 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-05 | `/api/ingest/tmdb` sin protección contra fuerza bruta, comparación de clave no constante y `error.message` en el 500 | Comparación con `safeEqual` (`timingSafeEqual`, compartida con moderación), rate limit sobre intentos **fallidos** (10 cada 5 min por IP) para no bloquear la ingesta legítima, 503 genérico si falta la clave y 500 sin detalle interno. Riesgos residuales: el límite depende de SEC-03 y el secreto `dev-ingest-secret` sigue activo solo con `next dev` (aceptado: nunca se ejecuta en Vercel y lo usa el script local). |
 | SEC-03 | El limitador de tasa vivía en memoria de cada instancia (inútil en serverless) y todos los clientes sin `x-forwarded-for` compartían un bucket | `rateLimit.js` pasa a fábrica con almacén intercambiable: Upstash Redis (contador `INCR` + `PEXPIRE NX` por REST, sin dependencias) cuando hay `UPSTASH_REDIS_REST_*` o `KV_REST_API_*`, y memoria en desarrollo. Si Redis falla o tarda más de 1,5 s se degrada a memoria y se registra el aviso (prioriza disponibilidad). Añadido `x-real-ip` como respaldo. Un test escanea `src` para que ninguna llamada omita `await`. **Pendiente de despliegue:** crear la base Redis y definir las variables; hasta entonces sigue en memoria. |
 | SEC-04 | `/api/ai/search` sin validación de entrada, sin `timeout` y con salida del modelo sin normalizar | `query` debe ser texto de 1 a 300 caracteres (el input del cliente comparte el límite), `timeout` de 15 s y `max_tokens` de 400 en DeepSeek, y la respuesta del modelo se trata como entrada no confiable: JSON inválido → 502, tipos y longitudes normalizados, `type` restringido a `movie`/`series`. Riesgo residual: la ruta sigue sin exigir sesión. |
+| SEC-07 | Los tokens de Firebase no se comprobaban contra revocación: un usuario deshabilitado conservaba acceso ~1 h | `verifyBearerUid(header, { checkRevoked })`. Se activa en moderación, `auth/admin` y en el envío de mensajes del chat (rutas de escritura y administración); las lecturas no pagan la llamada de red extra. `auth/id-token-revoked` y `auth/user-disabled` devuelven «tu sesión ya no es válida». |
+| SEC-08 | `/api/health/db` público, sin límite y con una consulta real a Neon en cada petición | Rate limit de 30/min por IP y caché de 30 s (5 s si falla) con el `createTtlCache` existente, más `Cache-Control: no-store`. Se mantiene el campo `catalog` porque el README lo documenta. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
 
 ### Media
-
-**SEC-07 — Los tokens de Firebase no se comprueban contra revocación**
-`src/server/db/firebaseAdmin.js:146` usa `verifyIdToken(token)` sin `checkRevoked`. Un usuario deshabilitado o con sesión revocada conserva acceso hasta que expira el token (≈1 h). Es relevante en `chat/moderation` y `auth/admin`.
-*Recomendación:* `verifyIdToken(token, true)` al menos en rutas de moderación.
-
-**SEC-08 — `/api/health/db` público, sin límite y con consulta real**
-`src/app/api/health/db/route.js:27` ejecuta `SELECT 1` en cada petición anónima (despierta el cómputo de Neon y consume cuota) y revela qué proveedor de catálogo se usa.
-*Recomendación:* rate limit, caché corta y respuesta mínima; o proteger detrás de un secreto.
 
 **SEC-09 — `/api/auth/limit` da falsa sensación de protección**
 `src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control. El límite real de fuerza bruta lo aporta Firebase, no esta ruta.
@@ -72,6 +66,6 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 
 1. ~~SEC-05 y SEC-06~~ (hecho).
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
-3. SEC-07 y SEC-08.
+3. ~~SEC-07 y SEC-08~~ (hecho).
 4. SEC-10 (`firebase-admin` 14) con pruebas.
 5. Baja: SEC-11 a SEC-15.
