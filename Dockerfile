@@ -22,7 +22,12 @@ COPY . .
 # (claves de API, DATABASE_URL, cuenta de servicio): los build args quedan en
 # `docker history`. Los secretos se inyectan al ARRANCAR el contenedor.
 ARG NEXT_PUBLIC_SITE_URL
+# Excepciones a DL3064 (aviso por el nombre de la variable): ambos valores son públicos.
+# El usuario de Cafecito es el enlace de donaciones, y la clave web de Firebase se envía al
+# navegador por diseño (la seguridad la aportan las reglas de Firestore y las de Auth).
+# hadolint ignore=DL3064
 ARG NEXT_PUBLIC_CAFECITO_USERNAME
+# hadolint ignore=DL3064
 ARG NEXT_PUBLIC_FIREBASE_API_KEY
 ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
 ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -34,6 +39,7 @@ ARG NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 # upgrade-insecure-requests, que se calculan al compilar (ver next.config.mjs).
 ARG FORCE_HTTPS_HEADERS=0
 
+# hadolint ignore=DL3064
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_PUBLIC_CAFECITO_USERNAME=$NEXT_PUBLIC_CAFECITO_USERNAME \
     NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
@@ -61,6 +67,13 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
+# La imagen final solo ejecuta `node server.js`: no necesita gestor de paquetes. Quitar npm,
+# corepack y yarn elimina su código (y las vulnerabilidades que Trivy detecta en sus
+# dependencias internas) y deja sin herramientas a quien entrase al contenedor.
+# Nota: borrar aquí oculta los archivos pero no reduce el tamaño, porque siguen en la capa base.
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-*
+
 # Solo lo que necesita el servidor: el bundle "standalone" trae únicamente las
 # dependencias que el código usa de verdad, sin node_modules completo ni fuentes.
 COPY --from=build --chown=node:node /app/.next/standalone ./
@@ -69,11 +82,12 @@ COPY --from=build --chown=node:node /app/public ./public
 # Next escribe su caché en .next/cache; debe existir y ser escribible por `node`.
 RUN mkdir -p .next/cache && chown node:node .next/cache
 
-# Usuario sin privilegios (uid 1000, incluido en la imagen oficial de Node).
-USER node
+# Usuario sin privilegios (`node`, uid/gid 1000, incluido en la imagen oficial de Node).
+# Numérico para que un orquestador pueda comprobar `runAsNonRoot`.
+USER 1000:1000
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
 CMD ["node", "server.js"]

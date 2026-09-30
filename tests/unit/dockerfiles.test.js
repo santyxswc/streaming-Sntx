@@ -39,13 +39,22 @@ describe('Dockerfile', () => {
 
   it('no ejecuta el contenedor como root', () => {
     const runner = dockerfile.slice(dockerfile.lastIndexOf('AS runner'));
-    expect(runner).toMatch(/^USER node$/m);
+    // Numérico y distinto de 0: un orquestador puede verificar `runAsNonRoot`.
+    const user = runner.match(/^USER (\S+)$/m)?.[1];
+    expect(user).toMatch(/^[1-9]\d*(:[1-9]\d*)?$/);
   });
 
   it('no incrusta secretos: solo build args NEXT_PUBLIC_* (públicos por definición)', () => {
     const args = [...dockerfile.matchAll(/^ARG (\w+)/gm)].map((m) => m[1]);
     const allowed = /^(NODE_IMAGE|FORCE_HTTPS_HEADERS|NEXT_PUBLIC_\w+)$/;
     expect(args.filter((name) => !allowed.test(name))).toEqual([]);
+  });
+
+  it('la imagen final no incluye gestor de paquetes (npm, corepack, yarn)', () => {
+    const runner = dockerfile.slice(dockerfile.lastIndexOf('AS runner'));
+    expect(runner).toMatch(/rm -rf[^\n]*\/usr\/local\/lib\/node_modules/);
+    expect(runner).toMatch(/\/usr\/local\/bin\/npm/);
+    expect(runner).toMatch(/\/opt\/yarn-\*/);
   });
 
   it('incluye un HEALTHCHECK', () => {
