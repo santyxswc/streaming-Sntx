@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import FirebaseAnalytics from "@/components/layout/FirebaseAnalytics";
 import Footer from "@/components/layout/Footer";
@@ -99,6 +100,7 @@ export default function RootLayout({ children }) {
           <Footer />
         </div>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
