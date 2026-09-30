@@ -1,6 +1,8 @@
 # streaming-Sntx
 
 [![CI](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/santyxswc/streaming-Sntx/actions/workflows/codeql.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/codeql.yml)
+[![Secret scan](https://github.com/santyxswc/streaming-Sntx/actions/workflows/secrets.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/secrets.yml)
 
 Catálogo cinematográfico de **más de 100.000 películas y series** para descubrir títulos a través de sus **tráilers oficiales**, con búsqueda en lenguaje natural asistida por IA, recomendaciones, listas personales y chat por título. Incluye una app web (Next.js) y un cliente de escritorio (Tauri) que consumen la misma API.
 
@@ -202,6 +204,30 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 | `POST /api/ai/search` | Identificación de títulos por descripción |
 | `/api/chat/*` | Mensajes, perfiles y moderación |
 | `GET /api/health/db` | Estado del proveedor de catálogo |
+
+## Ingeniería y seguridad
+
+El repositorio se trata como un proyecto de producción: cada cambio pasa por análisis automático antes de llegar a `main`, y lo que se despliega sale de `main`.
+
+```mermaid
+flowchart LR
+  dev[Commit o PR] --> gh[GitHub]
+  gh --> ci["CI: lint, tests y build<br/>escritorio (tsc + vite)<br/>reglas de Firestore (emulador)<br/>imagen Docker: Hadolint, arranque, Trivy"]
+  gh --> cq[CodeQL]
+  gh --> gl[gitleaks]
+  dep[Dependabot] -- PRs de actualización --> gh
+  gh -- PR --> prev[Vercel Preview]
+  gh -- push a main --> prod[Vercel Production]
+```
+
+- **Auditoría y modelo de amenazas:** [`docs/security-audit.md`](docs/security-audit.md) (hallazgos SEC-00 a SEC-18, con su estado) y [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+- **Operación:** [`docs/RUNBOOK.md`](docs/RUNBOOK.md) con la verificación tras cada despliegue y los planes de respuesta.
+- **Cadena de suministro:** acciones de GitHub fijadas por SHA, herramientas del CI fijadas por digest, Dependabot (npm, cargo, acciones y Docker), CodeQL y gitleaks.
+- **Contenedor:** imagen endurecida (usuario no root, sistema de archivos de solo lectura, sin npm en tiempo de ejecución). Ver [`docs/DOCKER.md`](docs/DOCKER.md).
+- **Comprobación de protecciones del repositorio:** `scripts/check-repo-posture.sh` consulta la API de GitHub (solo lectura) y falla si falta alguna.
+- **Node:** versión única en [`.nvmrc`](.nvmrc), que usan el CI y `engines`; la imagen Docker usa la misma versión mayor.
+
+Índice completo de la documentación en [`docs/README.md`](docs/README.md).
 
 ## Licencia
 
