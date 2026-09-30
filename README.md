@@ -97,7 +97,7 @@ tests/unit/              Tests de servicios, contratos de proveedores y capa HTT
 db/migrations/           Esquema SQL e índices de Neon
 scripts/                 Ingesta (TMDB, TVmaze), migraciones y utilidades
 desktop/                 Cliente de escritorio Tauri
-docs/                    Guías de Neon, Firebase, moderación, Docker y auditoría de seguridad
+docs/                    Guías de Neon, Firebase, moderación y Docker; auditoría, modelo de amenazas y runbook
 ```
 
 **Decisiones clave**

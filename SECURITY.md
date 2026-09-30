@@ -19,3 +19,9 @@ Incluye, si es posible: pasos para reproducir, impacto estimado y versión afect
 
 - No incluyas API keys, `DATABASE_URL` ni JSON de service account en issues, PRs ni mensajes.
 - Rota inmediatamente cualquier credencial que se haya publicado por error y elimina el historial o el mensaje en la plataforma si aplica.
+
+## Documentación de seguridad y operación
+
+- [Modelo de amenazas](docs/THREAT_MODEL.md): qué se protege, de quién y con qué controles.
+- [Informe de auditoría](docs/security-audit.md): hallazgos, correcciones y riesgos pendientes.
+- [Runbook de incidentes](docs/RUNBOOK.md): cómo contener, investigar y recuperar; rotación de secretos.
