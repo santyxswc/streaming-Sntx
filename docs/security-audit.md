@@ -9,11 +9,11 @@
 
 | Severidad | Cantidad |
 |---|---|
-| Alta | 2 |
+| Alta | 0 |
 | Media | 4 |
 | Baja | 5 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05) y fugas de configuración en errores de autenticación (SEC-06).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03) y abuso de coste del buscador con IA (SEC-04).
 
 ## Corregido
 
@@ -23,19 +23,11 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-01 | CORS `*` en todo `/api/*`; CSP con `unsafe-eval` en producción y sin `object-src`, `base-uri`, `form-action`, `frame-ancestors`; `X-XSS-Protection` obsoleta; sin HSTS; `X-Powered-By` visible | `src/config/securityHeaders.mjs` con tests. CORS solo en rutas públicas de lectura. |
 | SEC-02 | Sin análisis automatizado de seguridad | Dependabot, CodeQL, gitleaks y `npm audit` bloqueante en CI; permisos mínimos y acciones fijadas por SHA. |
 | SEC-05 | `/api/ingest/tmdb` sin protección contra fuerza bruta, comparación de clave no constante y `error.message` en el 500 | Comparación con `safeEqual` (`timingSafeEqual`, compartida con moderación), rate limit sobre intentos **fallidos** (10 cada 5 min por IP) para no bloquear la ingesta legítima, 503 genérico si falta la clave y 500 sin detalle interno. Riesgos residuales: el límite depende de SEC-03 y el secreto `dev-ingest-secret` sigue activo solo con `next dev` (aceptado: nunca se ejecuta en Vercel y lo usa el script local). |
+| SEC-03 | El limitador de tasa vivía en memoria de cada instancia (inútil en serverless) y todos los clientes sin `x-forwarded-for` compartían un bucket | `rateLimit.js` pasa a fábrica con almacén intercambiable: Upstash Redis (contador `INCR` + `PEXPIRE NX` por REST, sin dependencias) cuando hay `UPSTASH_REDIS_REST_*` o `KV_REST_API_*`, y memoria en desarrollo. Si Redis falla o tarda más de 1,5 s se degrada a memoria y se registra el aviso (prioriza disponibilidad). Añadido `x-real-ip` como respaldo. Un test escanea `src` para que ninguna llamada omita `await`. **Pendiente de despliegue:** crear la base Redis y definir las variables; hasta entonces sigue en memoria. |
+| SEC-04 | `/api/ai/search` sin validación de entrada, sin `timeout` y con salida del modelo sin normalizar | `query` debe ser texto de 1 a 300 caracteres (el input del cliente comparte el límite), `timeout` de 15 s y `max_tokens` de 400 en DeepSeek, y la respuesta del modelo se trata como entrada no confiable: JSON inválido → 502, tipos y longitudes normalizados, `type` restringido a `movie`/`series`. Riesgo residual: la ruta sigue sin exigir sesión. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
-
-### Alta
-
-**SEC-03 — El limitador de tasa no es fiable en serverless**
-`src/server/http/rateLimit.js:4` guarda los contadores en un `Map` en memoria. En Vercel cada instancia tiene su propia memoria y se reinicia en cada arranque en frío, así que el límite real es mucho mayor que el configurado. Además, sin cabecera `x-forwarded-for` (línea 24) todos los clientes comparten el bucket `'anonymous'`.
-*Recomendación:* limitador con almacén compartido (Upstash Redis vía Marketplace) o reglas de rate limiting del Vercel Firewall en `/api/ai/*`, `/api/ingest/*` y `/api/chat/*`.
-
-**SEC-04 — `/api/ai/search` permite abusar del coste de la API de IA**
-`src/app/api/ai/search/route.js:18` no valida el tipo ni la longitud de `query` y reenvía el texto a DeepSeek. No exige sesión. El límite de 5 por minuto depende de SEC-03. `src/server/integrations/deepseek.js:20` no define `timeout`. `JSON.parse` de la respuesta del modelo (línea 63) no está aislado del resto de errores.
-*Recomendación:* exigir `typeof query === 'string'` y un máximo (p. ej. 300 caracteres), `timeout` en axios, tope diario global de llamadas y, idealmente, exigir sesión de Firebase o BotID.
 
 ### Media
 
@@ -79,8 +71,7 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 ## Orden de corrección sugerido
 
 1. ~~SEC-05 y SEC-06~~ (hecho).
-2. SEC-04: validación de entrada, `timeout` y tope de coste.
-3. SEC-03: decidir almacén compartido o reglas del Vercel Firewall.
-4. SEC-07 y SEC-08.
-5. SEC-10 (`firebase-admin` 14) con pruebas.
-6. Baja: SEC-11 a SEC-15.
+2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
+3. SEC-07 y SEC-08.
+4. SEC-10 (`firebase-admin` 14) con pruebas.
+5. Baja: SEC-11 a SEC-15.

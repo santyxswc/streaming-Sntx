@@ -165,6 +165,7 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | Verificación de tokens en servidor ([guía](docs/FIREBASE_SERVICE_ACCOUNT.md)) |
 | `CHAT_PROVIDER`, `CHAT_MODERATION_SECRET`, `CHAT_ADMIN_UIDS` | Chat y moderación ([guía](docs/CHAT_MODERATION.md)) |
 | `INGEST_SECRET_KEY` | Protege `POST /api/ingest/tmdb` (cabecera `x-api-key`) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Almacén compartido del rate limiting (opcional; también se aceptan `KV_REST_API_URL` / `KV_REST_API_TOKEN`). Sin ellas los límites viven en memoria de cada instancia, lo que en serverless no es fiable. |
 
 ## Scripts
 
