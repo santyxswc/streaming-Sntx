@@ -1,4 +1,5 @@
 import { buildHeaders } from './src/config/securityHeaders.mjs';
+import { imageRemotePatterns } from './src/config/imageHosts.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -11,17 +12,9 @@ const nextConfig = {
     });
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    remotePatterns: imageRemotePatterns,
     unoptimized: true,
   },
-  typescript: {
-    ignoreBuildErrors: true, // Evita que errores de tipos bloqueen el despliegue
-  }
 };
 
 export default nextConfig;
