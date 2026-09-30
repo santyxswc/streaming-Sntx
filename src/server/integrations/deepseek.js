@@ -1,5 +1,6 @@
 import 'server-only';
 import axios from 'axios';
+import { logger } from '@/server/observability/logger';
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -13,7 +14,7 @@ export const chatCompletion = async (messages, options = {}) => {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   
   if (!apiKey) {
-    console.error('DEEPSEEK_API_KEY is missing from environment variables.');
+    logger.error('deepseek.key_missing');
     throw new Error('DEEPSEEK_API_KEY is not defined in environment variables. Please restart your Next.js server.');
   }
 
@@ -37,7 +38,7 @@ export const chatCompletion = async (messages, options = {}) => {
 
     return response.data.choices[0].message.content;
   } catch (error) {
-    console.error('DeepSeek API Error:', error.response?.data || error.message);
+    logger.error('deepseek.request_failed', { err: error });
     throw new Error('Failed to connect to DeepSeek AI. Check your API key and connection.');
   }
 };

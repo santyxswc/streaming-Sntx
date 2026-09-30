@@ -6,6 +6,7 @@ import { getTmdbMediaList, isTmdbConfigured } from '@/server/integrations/tmdb';
 import { trailerService } from '@/server/trailers/trailerService';
 import { createTtlCache } from '@/server/shared/ttlCache';
 import { createLimiter } from '@/server/shared/concurrency';
+import { logger } from '@/server/observability/logger';
 
 /**
  * Feed curado de las páginas de inicio, películas y series.
@@ -105,7 +106,7 @@ export function createFeedService({
     const pools = await Promise.all(
       page.sections.map((section) =>
         catalogCandidates(section, at).catch((err) => {
-          console.error(`[feed] Sección ${section.id} falló:`, err.message);
+          logger.error('feed.section_failed', { section: section.id, err });
           return [];
         })
       )

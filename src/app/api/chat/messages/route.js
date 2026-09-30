@@ -7,6 +7,7 @@ import {
   mediaExists,
   getOrCreateProfile,
 } from '@/server/chat/chatRepository';
+import { logger } from '@/server/observability/logger';
 
 const MAX_BODY = 500;
 const MIN_BODY = 1;
@@ -87,7 +88,7 @@ export async function GET(req) {
       data: { messages, lastId },
     });
   } catch (e) {
-    console.error('GET /api/chat/messages', e);
+    logger.error('chat.list_failed', { route: 'chat-messages', err: e });
     return NextResponse.json(
       { success: false, error: 'Error al cargar el chat' },
       { status: 500 }
@@ -110,7 +111,7 @@ export async function POST(req) {
   try {
     uid = await verifyBearerUid(req.headers.get('authorization'), { checkRevoked: true });
   } catch (e) {
-    console.error('verifyBearerUid', e);
+    logger.warn('auth.token_rejected', { route: 'chat-messages', code: e?.code });
     return NextResponse.json(
       { success: false, error: formatVerifyAuthError(e) },
       { status: 401 }
@@ -179,7 +180,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, data: message });
   } catch (e) {
-    console.error('POST /api/chat/messages', e);
+    logger.error('chat.send_failed', { route: 'chat-messages', err: e });
     const hint =
       process.env.NODE_ENV === 'development' && e?.message
         ? ` (${e.message})`

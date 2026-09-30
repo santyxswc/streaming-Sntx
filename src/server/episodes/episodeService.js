@@ -4,6 +4,7 @@ import { getTvmazeEpisodes } from '@/server/integrations/tvmaze';
 import { getCatalogProvider } from '@/server/config/catalogEnv';
 import { getDemoEpisodes } from '@/server/catalog/providers/demoCatalog';
 import { stripHtml } from '@/lib/text.mjs';
+import { logger } from '@/server/observability/logger';
 
 /**
  * Temporadas y episodios de una serie. Cada resolvedor declara qué ids sabe
@@ -63,7 +64,7 @@ export function createEpisodeService(resolvers) {
           const result = await resolver.getSeason(key, season);
           if (result) return result;
         } catch (err) {
-          console.warn(`[episodes] ${showId} T${season}:`, err.message);
+          logger.warn('episodes.season_failed', { showId, season, err });
         }
       }
       return null;

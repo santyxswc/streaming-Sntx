@@ -1,5 +1,6 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
+import { logger } from '@/server/observability/logger';
 
 // Tras esto se poda el almacén en memoria (probabilístico, no en cada petición).
 const CLEANUP_PROBABILITY = 0.01;
@@ -80,7 +81,11 @@ export function createStoreFromEnv(env = process.env) {
  * @param {{ store: { hit: Function }, fallback?: { hit: Function }, onError?: Function }} deps
  *   `fallback` se usa si `store` lanza (Redis caído o lento): se prioriza que la API siga viva.
  */
-export function createRateLimiter({ store, fallback = createMemoryStore(), onError = console.error }) {
+export function createRateLimiter({
+  store,
+  fallback = createMemoryStore(),
+  onError = (_message, detail) => logger.warn('ratelimit.store_unavailable', { detail }),
+}) {
   async function allowed(key, opts) {
     try {
       return await store.hit(key, opts);

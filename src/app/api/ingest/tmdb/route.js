@@ -5,6 +5,7 @@ import { getNeonSql } from '@/server/db/neonSql';
 import { rateLimit } from '@/server/http/rateLimit';
 import { safeEqual } from '@/server/shared/safeEqual';
 import { sanitizeForLog } from '@/lib/text.mjs';
+import { logger } from '@/server/observability/logger';
 
 export const runtime = 'nodejs';
 
@@ -49,7 +50,7 @@ export async function POST(request) {
       (isDev ? 'dev-ingest-secret' : null);
     if (!secretKey) {
       // Mensaje genérico: no revelar a un anónimo qué variable falta.
-      console.error('[ingest-tmdb] INGEST_SECRET_KEY no configurada');
+      logger.error('ingest_tmdb.key_missing', { route: 'ingest-tmdb' });
       return NextResponse.json(
         { success: false, error: 'Servicio no configurado' },
         { status: 503 }
@@ -130,7 +131,7 @@ export async function POST(request) {
       totalPages = result.totalPages || 1;
 
       if (!result.items.length) {
-        console.log('[ingest-tmdb] Sin items en página %s (%s)', sanitizeForLog(currentPage), sanitizeForLog(mediaType));
+        logger.info('ingest_tmdb.empty_page', { route: 'ingest-tmdb', page: currentPage, mediaType });
         break;
       }
       totalRaw += result.items.length;
@@ -148,11 +149,15 @@ export async function POST(request) {
       }
       totalDuplicates += duplicatesThisPage;
 
-      console.log(
-        '[ingest-tmdb] %s página %s/%s: %d items (%d nuevos, %d ya existían)',
-        sanitizeForLog(mediaType), sanitizeForLog(currentPage), sanitizeForLog(totalPages),
-        result.items.length, newItems.length, duplicatesThisPage
-      );
+      logger.info('ingest_tmdb.page_done', {
+        route: 'ingest-tmdb',
+        mediaType,
+        page: currentPage,
+        totalPages,
+        items: result.items.length,
+        added: newItems.length,
+        duplicates: duplicatesThisPage,
+      });
 
       if (newItems.length) {
         await Promise.all([
@@ -173,7 +178,7 @@ export async function POST(request) {
       /* TMDB sí reporta total_pages de forma fiable (a diferencia de lamovie.org),
          así que aquí sí podemos parar en el límite real además de en página vacía. */
       if (currentPage >= totalPages) {
-        console.log('[ingest-tmdb] Llegamos a la última página que reporta TMDB.');
+        logger.info('ingest_tmdb.last_page', { route: 'ingest-tmdb', page: currentPage });
         break;
       }
       currentPage += 1;
@@ -191,7 +196,7 @@ export async function POST(request) {
       data: sampleItems.slice(0, 20),
     });
   } catch (error) {
-    console.error('Ingest TMDB API Error:', error);
+    logger.error('ingest_tmdb.failed', { route: 'ingest-tmdb', err: error });
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }

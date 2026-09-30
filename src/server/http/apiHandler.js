@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/server/http/rateLimit';
+import { logger, withLogContext, requestIdFrom } from '@/server/observability/logger';
 
 /** Políticas de caché CDN reutilizables (Cache-Control). */
 export const CachePolicy = {
@@ -28,7 +29,7 @@ export function errorResponse(error, context = 'api') {
   if (error instanceof HttpError) {
     return NextResponse.json({ success: false, error: error.message }, { status: error.status });
   }
-  console.error(`[${context}]`, error);
+  logger.error('api.error', { route: context, err: error });
   const isConfig = CONFIG_ERROR.test(error?.message || '');
   return NextResponse.json(
     { success: false, error: isConfig ? 'Servicio no configurado' : 'Error interno del servidor' },
@@ -45,16 +46,18 @@ export function errorResponse(error, context = 'api') {
  * @param {{ id: string, limit?: number, windowMs?: number, cache?: string }} options
  */
 export function withApiHandler(handler, { id, limit = 30, windowMs = 60000, cache = CachePolicy.hour }) {
-  return async (request, ctx = {}) => {
-    const limited = await rateLimit(request, { id, limit, windowMs });
-    if (limited) return limited;
+  return (request, ctx = {}) =>
+    // Todo log emitido durante la petición lleva la ruta y un requestId (el de Vercel si existe).
+    withLogContext({ route: id, requestId: requestIdFrom(request) }, async () => {
+      const limited = await rateLimit(request, { id, limit, windowMs });
+      if (limited) return limited;
 
-    try {
-      const { searchParams } = new URL(request.url);
-      const data = await handler(request, { ...ctx, searchParams });
-      return NextResponse.json({ success: true, data }, { headers: { 'Cache-Control': cache } });
-    } catch (error) {
-      return errorResponse(error, id);
-    }
-  };
+      try {
+        const { searchParams } = new URL(request.url);
+        const data = await handler(request, { ...ctx, searchParams });
+        return NextResponse.json({ success: true, data }, { headers: { 'Cache-Control': cache } });
+      } catch (error) {
+        return errorResponse(error, id);
+      }
+    });
 }

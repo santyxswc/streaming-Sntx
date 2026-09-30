@@ -5,13 +5,14 @@ import {
   getOrCreateProfile,
   updateChatName,
 } from '@/server/chat/chatRepository';
+import { logger } from '@/server/observability/logger';
 
 async function requireUid(req) {
   try {
     const uid = await verifyBearerUid(req.headers.get('authorization'));
     return { uid, error: null };
   } catch (e) {
-    console.error('verifyBearerUid', e);
+    logger.warn('auth.token_rejected', { route: 'chat-profile', code: e?.code });
     return {
       uid: null,
       error: NextResponse.json(
@@ -52,7 +53,7 @@ export async function GET(req) {
     const { chatName } = await getOrCreateProfile(uid);
     return NextResponse.json({ success: true, data: { chatName } });
   } catch (e) {
-    console.error('GET /api/chat/profile', e);
+    logger.error('chat_profile.load_failed', { route: 'chat-profile', err: e });
     return NextResponse.json(
       { success: false, error: 'No se pudo cargar el perfil de chat' },
       { status: 500 }

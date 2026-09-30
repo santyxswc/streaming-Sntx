@@ -43,3 +43,41 @@ describe('withApiHandler', () => {
     expect((await GET(req())).status).toBe(429);
   });
 });
+
+describe('withApiHandler: logs estructurados', () => {
+  const capture = () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    return { spy, lines: () => spy.mock.calls.map(([line]) => JSON.parse(line)) };
+  };
+
+  it('un error inesperado produce una línea JSON con ruta y requestId', async () => {
+    const { lines } = capture();
+    const GET = withApiHandler(async () => {
+      throw new Error('falló');
+    }, { id: 't-log' });
+    await GET(new Request('http://localhost/api/x', { headers: { 'x-forwarded-for': '7.7.7.7', 'x-vercel-id': 'gru1::req-42' } }));
+    const [entry] = lines();
+    expect(entry).toMatchObject({ level: 'error', event: 'api.error', route: 't-log', requestId: 'gru1::req-42' });
+    expect(entry.err).toMatchObject({ name: 'Error', message: 'falló' });
+  });
+
+  it('el logger dentro del handler hereda el contexto de la petición', async () => {
+    const { lines } = capture();
+    const { logger } = await import('@/server/observability/logger');
+    const GET = withApiHandler(async () => {
+      logger.error('mi.evento', { detalle: 1 });
+      return 'ok';
+    }, { id: 't-ctx' });
+    await GET(request());
+    expect(lines().find((l) => l.event === 'mi.evento')).toMatchObject({ route: 't-ctx', detalle: 1 });
+  });
+
+  it('no registra secretos del mensaje de error', async () => {
+    const { spy } = capture();
+    const GET = withApiHandler(async () => {
+      throw new Error('fetch https://api.test/x?api_key=SECRETO_123 falló');
+    }, { id: 't-sec' });
+    await GET(request());
+    expect(spy.mock.calls.map(([l]) => l).join('\n')).not.toContain('SECRETO_123');
+  });
+});

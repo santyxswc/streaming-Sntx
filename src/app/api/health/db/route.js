@@ -3,6 +3,7 @@ import { getNeonSql } from '@/server/db/neonSql';
 import { getCatalogProvider } from '@/server/config/catalogEnv';
 import { rateLimit } from '@/server/http/rateLimit';
 import { createTtlCache } from '@/server/shared/ttlCache';
+import { logger } from '@/server/observability/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ async function checkDatabase(catalog) {
     await sql`SELECT 1 AS ok`;
     return { status: 200, body: { ok: true, catalog: 'neon', db: 'connected' }, ttl: OK_TTL_MS };
   } catch (e) {
-    console.error('[health/db]', e);
+    logger.error('health_db.connect_failed', { route: 'health-db', err: e });
     return { status: 503, body: { ok: false, error: 'database_connect_failed' }, ttl: FAIL_TTL_MS };
   }
 }

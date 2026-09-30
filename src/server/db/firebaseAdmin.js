@@ -190,7 +190,7 @@ const CONFIG_ERROR_PREFIXES = [
 /**
  * Mensaje seguro para respuestas API cuando verifyBearerUid falla.
  * El detalle de los errores de configuración solo se registra en el servidor
- * (las rutas ya hacen console.error del error original).
+ * (las rutas ya registran el error original con el logger).
  */
 export function formatVerifyAuthError(err) {
   const msg = err?.message || '';

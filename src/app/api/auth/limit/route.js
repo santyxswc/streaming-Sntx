@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/server/http/rateLimit';
+import { logger } from '@/server/observability/logger';
 
 /**
  * Límite de mejor esfuerzo para el formulario de acceso. NO es un control de seguridad:
@@ -20,7 +21,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Auth limit error:', error);
+    logger.error('auth_limit.failed', { route: 'auth-limit', err: error });
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

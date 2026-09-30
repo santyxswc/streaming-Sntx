@@ -3,6 +3,7 @@ import { findMediaForAiLookup } from '@/server/catalog/catalogRepository';
 import { chatCompletion } from '@/server/integrations/deepseek';
 import { rateLimit } from '@/server/http/rateLimit';
 import { parseSearchQuery, parseAiPrediction } from '@/lib/aiSearch';
+import { logger } from '@/server/observability/logger';
 
 export const runtime = 'nodejs';
 
@@ -30,7 +31,7 @@ export async function POST(req) {
 
     // Check if DeepSeek is configured
     if (!process.env.DEEPSEEK_API_KEY) {
-      console.warn('[ai/search] DEEPSEEK_API_KEY no configurada: búsqueda IA deshabilitada.');
+      logger.warn('ai_search.disabled', { route: 'ai-search', reason: 'missing_api_key' });
       return NextResponse.json({
         success: true,
         // Mensaje para el visitante; la configuración faltante se registra en el servidor.
@@ -71,7 +72,7 @@ export async function POST(req) {
 
     if (!aiPrediction) {
       // El modelo respondió algo inutilizable: fallo del proveedor, no del cliente.
-      console.error('[ai/search] Respuesta del modelo no utilizable');
+      logger.error('ai_search.unusable_model_response', { route: 'ai-search' });
       return NextResponse.json(
         { success: false, error: 'No se pudo completar la búsqueda con IA' },
         { status: 502 }
@@ -109,7 +110,7 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error('AI Search Error:', error);
+    logger.error('ai_search.failed', { route: 'ai-search', err: error });
     return NextResponse.json({ success: false, error: 'No se pudo completar la búsqueda con IA' }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { searchTmdb, isTmdbConfigured } from "@/server/integrations/tmdb";
 import { searchOmdb, isOmdbConfigured } from "@/server/integrations/omdb";
 import { rateLimit } from "@/server/http/rateLimit";
 import { sanitizeForLog } from "@/lib/text.mjs";
+import { logger } from '@/server/observability/logger';
 
 export const runtime = "nodejs";
 export const revalidate = 1800;
@@ -55,7 +56,7 @@ export async function GET(request) {
         }));
       })
       .catch((err) => {
-        console.error("Multi-search local error:", err.message);
+        logger.error('multisearch.local_failed', { err });
         return [];
       })
   );
@@ -66,11 +67,11 @@ export async function GET(request) {
       searchTmdb(query)
         .then((results) => {
           if (results.length > 0) sources.push("tmdb");
-          else console.warn('[multi-search] TMDB devolvió 0 resultados para "%s" (revisa logs de [tmdb] arriba: auth/timeout/formato)', sanitizeForLog(query));
+          else logger.warn('multisearch.tmdb_empty', { queryLength: query.length });
           return results; // already have source: 'tmdb'
         })
         .catch((err) => {
-          console.error('[multi-search] TMDB error para "%s":', sanitizeForLog(query), err.message, err.stack?.split("\n")[1] || "");
+          logger.error('multisearch.tmdb_failed', { queryLength: query.length, err });
           return [];
         })
     );
@@ -85,7 +86,7 @@ export async function GET(request) {
           return results; // already have source: 'omdb'
         })
         .catch((err) => {
-          console.error("Multi-search OMDb error:", err.message);
+          logger.error('multisearch.omdb_failed', { err });
           return [];
         })
     );

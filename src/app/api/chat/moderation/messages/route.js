@@ -3,6 +3,7 @@ import { rateLimit } from '@/server/http/rateLimit';
 import { isChatModeratorAuthorized } from '@/server/chat/moderationAuth';
 import { listGlobalFeed } from '@/server/chat/chatRepository';
 import { getChatProvider } from '@/server/config/chatEnv';
+import { logger } from '@/server/observability/logger';
 
 function isUuid(s) {
   return (
@@ -133,7 +134,7 @@ export async function GET(req) {
       data: { messages, nextBeforeId },
     });
   } catch (e) {
-    console.error('GET /api/chat/moderation/messages', e);
+    logger.error('chat_moderation.list_failed', { route: 'chat-moderation-messages', err: e });
     return NextResponse.json(
       { success: false, error: 'Error al cargar el feed de moderación' },
       { status: 500 }

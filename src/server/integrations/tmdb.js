@@ -1,4 +1,5 @@
 import 'server-only';
+import { logger } from '@/server/observability/logger';
 /**
  * Cliente para TMDB API (The Movie Database).
  * @see https://developer.themoviedb.org/docs
@@ -51,13 +52,13 @@ async function tmdbFetch(path, params = {}) {
       next: { revalidate: 3600 },
     });
   } catch (err) {
-    console.error(`[tmdb] Fetch failed for ${path}:`, err.message);
+    logger.error('tmdb.fetch_failed', { path, err });
     return null;
   }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    console.error(`[tmdb] ${path} -> HTTP ${res.status}: ${body.slice(0, 300)}`);
+    logger.error('tmdb.http_error', { path, status: res.status, body: body.slice(0, 300) });
     return null;
   }
   return res.json();
