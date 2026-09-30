@@ -1,0 +1,25 @@
+#!/bin/sh
+# Hook de pre-commit: secretos en lo staged, y lint y pruebas si se tocó código.
+# Se activa con `npm run hooks:install` (también se ejecuta solo con `npm install`).
+# Saltarlo en un caso excepcional: git commit --no-verify (el CI lo volverá a comprobar).
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+echo "pre-commit: análisis de secretos"
+if command -v gitleaks >/dev/null 2>&1; then
+  if gitleaks git --help >/dev/null 2>&1; then
+    gitleaks git --pre-commit --staged --redact --no-banner
+  else
+    gitleaks protect --staged --redact --no-banner
+  fi
+else
+  echo "AVISO: gitleaks no está instalado; se omite el análisis local de secretos." >&2
+  echo "       El CI lo hará igualmente. Para instalarlo: sudo pacman -S gitleaks" >&2
+fi
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.(m?js|jsx|json)$'; then
+  echo "pre-commit: lint"
+  npm run lint --silent
+  echo "pre-commit: pruebas"
+  npm test --silent
+fi
