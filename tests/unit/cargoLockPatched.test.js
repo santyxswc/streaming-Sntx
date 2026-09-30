@@ -32,4 +32,12 @@ describe('desktop/src-tauri/Cargo.lock', () => {
     expect(versionOf('tauri-runtime')).toBe(tauri);
     expect(versionOf('tauri-runtime-wry')).toBe(tauri);
   });
+
+  it('los plugins de Rust y los paquetes npm de Tauri están en la misma versión', () => {
+    // `tauri dev` aborta con "Found version mismatched Tauri packages" si difieren (major.minor).
+    const npmLock = JSON.parse(readFileSync('desktop/package-lock.json', 'utf8'));
+    const npmVersion = npmLock.packages['node_modules/@tauri-apps/plugin-opener'].version;
+    const minor = (v) => v.split('.').slice(0, 2).join('.');
+    expect(minor(versionOf('tauri-plugin-opener'))).toBe(minor(npmVersion));
+  });
 });
