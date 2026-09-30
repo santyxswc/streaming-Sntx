@@ -1,12 +1,49 @@
+<div align="center">
+
 # streaming-Sntx
+
+**Descubre películas y series a través de sus tráilers oficiales.**
 
 [![CI](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/santyxswc/streaming-Sntx/actions/workflows/codeql.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/codeql.yml)
 [![Secret scan](https://github.com/santyxswc/streaming-Sntx/actions/workflows/secrets.yml/badge.svg)](https://github.com/santyxswc/streaming-Sntx/actions/workflows/secrets.yml)
 
+[**Ver la demo →**](https://streaming-sntx.vercel.app)
+
+![Next.js](https://img.shields.io/badge/Next.js_16-000?style=flat-square&logo=nextdotjs)
+![React](https://img.shields.io/badge/React_19-20232a?style=flat-square&logo=react&logoColor=61dafb)
+![Tailwind](https://img.shields.io/badge/Tailwind_4-0f172a?style=flat-square&logo=tailwindcss&logoColor=38bdf8)
+![Tauri](https://img.shields.io/badge/Tauri_2-24c8db?style=flat-square&logo=tauri&logoColor=fff)
+![Firebase](https://img.shields.io/badge/Firebase-ffca28?style=flat-square&logo=firebase&logoColor=000)
+![Neon](https://img.shields.io/badge/Neon_Postgres-00e599?style=flat-square&logo=postgresql&logoColor=000)
+![Vercel](https://img.shields.io/badge/Vercel-000?style=flat-square&logo=vercel)
+![Docker](https://img.shields.io/badge/Docker-2496ed?style=flat-square&logo=docker&logoColor=fff)
+
+<img src="docs/images/inicio.jpg" alt="Portada de streaming-Sntx con el tráiler de fondo y la búsqueda con IA" width="100%">
+
+</div>
+
 Catálogo cinematográfico de **más de 100.000 películas y series** para descubrir títulos a través de sus **tráilers oficiales**, con búsqueda en lenguaje natural asistida por IA, recomendaciones, listas personales y chat por título. Incluye una app web (Next.js) y un cliente de escritorio (Tauri) que consumen la misma API.
 
 > streaming-Sntx no aloja ni enlaza contenido protegido: solo reproduce tráilers públicos de YouTube a través del reproductor embebido oficial.
+
+## Así se ve
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/filas.jpg" alt="Búsqueda con IA y filas de tendencias"><br><sub><b>Búsqueda con IA</b> y filas curadas de tendencias</sub></td>
+    <td width="50%"><img src="docs/images/ficha.jpg" alt="Ficha de una película con el tráiler de fondo"><br><sub><b>Ficha</b> con tráiler, «Mi lista» y chat por título</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/peliculas.jpg" alt="Sección de películas populares"><br><sub><b>Películas</b> populares con filtros por género, año y país</sub></td>
+    <td width="50%"><img src="docs/images/acceso.jpg" alt="Formulario de inicio de sesión"><br><sub><b>Acceso</b> con Firebase Auth y contraseña validada en servidor</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="docs/images/movil.jpg" alt="Versión móvil" width="280"><br><sub><b>Móvil</b>: la misma web, adaptada</sub></td>
+  </tr>
+</table>
+
+> Capturas de la web en producción. Las carátulas y los tráilers pertenecen a sus titulares; los datos provienen de TMDB.
 
 ## Funcionalidades
 
@@ -16,7 +53,8 @@ Catálogo cinematográfico de **más de 100.000 películas y series** para descu
 - **Portadas curadas**: inicio, películas y series muestran solo títulos populares (rankings de TMDB por tendencia, votos y popularidad) que existen en el catálogo y tienen tráiler, sin repetir títulos entre filas.
 - **Mi lista** sincronizada en Firestore para usuarios autenticados (Firebase Auth).
 - **Chat por título** con moderación, nombres de usuario generados y límites de uso.
-- **Cliente de escritorio** (Tauri + Vite + React + TypeScript).
+- **Cliente de escritorio** (Tauri + Vite + React + TypeScript) con CSP propia; los tráilers se incrustan mediante una página puente de la web porque YouTube rechaza los orígenes `tauri://`.
+- **Privacidad:** la analítica de Google solo se activa si la persona la acepta, con página de [privacidad y cookies](https://streaming-sntx.vercel.app/privacidad).
 
 ## Stack
 
@@ -92,10 +130,13 @@ src/
 │   ├── integrations/    Clientes TMDB, TVmaze, OMDb, DeepSeek
 │   ├── db/              Clientes Postgres y Firebase Admin
 │   ├── http/            withApiHandler (rate limit, caché, errores) y rate limiting
+│   ├── embed/           Página puente de YouTube para el escritorio (ver SEC-20)
+│   ├── observability/   Logger JSON con contexto de petición y redacción de secretos
 │   ├── shared/          Caché TTL y limitador de concurrencia
 │   └── config/          Selección de proveedores por entorno
 └── lib/                 Utilidades isomórficas (youtube, rutas, géneros, firebase cliente)
 tests/unit/              Tests de servicios, contratos de proveedores y capa HTTP (Vitest)
+e2e/                     Pruebas de extremo a extremo (Playwright) contra el build de producción
 db/migrations/           Esquema SQL e índices de Neon
 scripts/                 Ingesta (TMDB, TVmaze), migraciones y utilidades
 desktop/                 Cliente de escritorio Tauri
@@ -122,7 +163,7 @@ docs/                    Guías de Neon, Firebase, moderación y Docker; auditor
 
 ## Puesta en marcha
 
-Requisitos: **Node.js 20+**. Todo lo demás es opcional: sin variables de entorno la app funciona con el catálogo demo.
+Requisitos: **Node.js 22+** (versión fijada en [`.nvmrc`](.nvmrc)). Todo lo demás es opcional: sin variables de entorno la app funciona con el catálogo demo.
 
 ```bash
 git clone https://github.com/santyxswc/streaming-Sntx.git
@@ -151,7 +192,7 @@ npm install
 npm run tauri dev
 ```
 
-Ver [desktop/README.md](desktop/README.md).
+Ver [desktop/README.md](desktop/README.md). La app de escritorio tiene su propia CSP en `desktop/src-tauri/tauri.conf.json`: si la compilas contra otra API (`VITE_API_URL`), añade su origen a `connect-src` y `frame-src`.
 
 ### Docker
 
@@ -172,6 +213,7 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 | `TMDB_API_KEY` | Resolución de tráilers, fichas y búsqueda externa |
 | `DEEPSEEK_API_KEY` | Búsqueda con IA |
 | `NEXT_PUBLIC_FIREBASE_*` | Auth y favoritos en el cliente |
+| `NEXT_PUBLIC_PRIVACY_CONTACT` | Correo de contacto de la página `/privacidad` (opcional) |
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | Verificación de tokens en servidor ([guía](docs/FIREBASE_SERVICE_ACCOUNT.md)) |
 | `CHAT_PROVIDER`, `CHAT_MODERATION_SECRET`, `CHAT_ADMIN_UIDS` | Chat y moderación ([guía](docs/CHAT_MODERATION.md)) |
 | `INGEST_SECRET_KEY` | Protege `POST /api/ingest/tmdb` (cabecera `x-api-key`) |
@@ -239,3 +281,7 @@ flowchart LR
 ## Licencia
 
 [MIT](LICENSE) © santyxswc
+
+## Créditos
+
+Este producto usa la API de [TMDB](https://www.themoviedb.org) pero no está respaldado ni certificado por TMDB. Los tráilers se reproducen con el reproductor oficial de YouTube.
