@@ -24,6 +24,10 @@ on:
         description: "Commit o etiqueta a construir (por defecto, main)"
         type: string
         default: main
+      version:
+        description: "Versión sin 'v' para republicar una release (vacío = imagen `edge`)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -123,7 +127,7 @@ jobs:
 
       - name: SBOM de dependencias npm
         if: inputs.version != ''
-        run: npm sbom --sbom-format cyclonedx --omit dev > sbom-npm.cdx.json
+        run: npm sbom --sbom-format cyclonedx --omit dev --package-lock-only > sbom-npm.cdx.json
 
       - name: Adjuntar los SBOM a la release
         if: inputs.version != ''
