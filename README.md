@@ -185,6 +185,10 @@ Todas están listadas en [`.env.example`](.env.example). Las principales:
 | `npm run build` / `npm start` | Build y servidor de producción |
 | `npm run lint` | ESLint |
 | `npm test` | Tests unitarios (Vitest) |
+| `npm run test:coverage` | Tests con cobertura; los umbrales de `vitest.config.mjs` fallan si baja |
+| `npm run test:e2e` | e2e con Playwright contra el build de producción en modo demo (ejecuta `npm run build` antes; la primera vez, `npx playwright install chromium`) |
+| `npm run test:rules` | Reglas de Firestore en el emulador (JDK 21 y `firebase-tools`) |
+| `npm run hooks:install` | Activa el hook de pre-commit (`.githooks/`): gitleaks, lint y pruebas. `npm install` ya lo hace solo |
 | `npm run migrate:neon` | Migraciones SQL |
 | `npm run ingest:tmdb` | Ingesta desde TMDB (variantes `:movie:full`, `:series:full`, `:es:full`) |
 | `npm run ingest:tvmaze` | Ingesta de series desde TVmaze (`:full` para el catálogo completo) |
@@ -225,6 +229,8 @@ flowchart LR
 - **Cadena de suministro:** acciones de GitHub fijadas por SHA, herramientas del CI fijadas por digest, Dependabot (npm, cargo, acciones y Docker), CodeQL y gitleaks.
 - **Contenedor:** imagen endurecida (usuario no root, sistema de archivos de solo lectura, sin npm en tiempo de ejecución). Ver [`docs/DOCKER.md`](docs/DOCKER.md).
 - **Comprobación de protecciones del repositorio:** `scripts/check-repo-posture.sh` consulta la API de GitHub (solo lectura) y falla si falta alguna.
+- **Calidad en cada commit y en el CI:** hook de pre-commit con gitleaks, lint y pruebas; cobertura con umbral; e2e con Playwright que también falla ante violaciones de la CSP; análisis dinámico semanal con OWASP ZAP ([`dast.yml`](.github/workflows/dast.yml), solo informe).
+- **Observabilidad:** logs JSON estructurados con `route` y `requestId` y redacción de secretos (`src/server/observability`), monitor de disponibilidad cada 15 min que abre una incidencia si producción cae (`uptime.yml`), presupuesto de errores (`scripts/error-budget.sh`) y Speed Insights. Ver [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 - **Node:** versión única en [`.nvmrc`](.nvmrc), que usan el CI y `engines`; la imagen Docker usa la misma versión mayor.
 
 Índice completo de la documentación en [`docs/README.md`](docs/README.md).

@@ -23,3 +23,6 @@
 | Script | Qué hace |
 |---|---|
 | `scripts/check-repo-posture.sh` | Comprueba por la API de GitHub (solo lectura) las protecciones del repositorio y las alertas abiertas. Sale con código 1 si algo falla. |
+| `scripts/zap-summary.mjs` | Resume el informe JSON de ZAP (workflow `dast.yml`) para el resumen del job. |
+| `scripts/uptime-check.sh` | Comprueba `/api/health`, `/api/health/db` y la home de producción (solo GET). Lo ejecuta el workflow `Disponibilidad` cada 15 min. |
+| `scripts/error-budget.sh` | Disponibilidad de los últimos 30 días frente al objetivo y presupuesto de errores restante. |
