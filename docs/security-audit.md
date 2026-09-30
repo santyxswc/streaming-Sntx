@@ -3,15 +3,15 @@
 - **Fecha:** 2026-09-29
 - **Alcance:** rutas de `src/app/api/*`, módulos de `src/server/*` que usan, `firestore.rules`, cabeceras HTTP, dependencias y CI.
 - **Método:** revisión manual del código, `npm audit`, pruebas de cabeceras y CORS contra un build de producción.
-- **No cubierto todavía:** despliegue real en Vercel (WAF, variables de entorno por entorno), `desktop/src-tauri`, pruebas dinámicas (ZAP).
+- **No cubierto todavía:** despliegue real en Vercel (WAF, variables de entorno por entorno), pruebas dinámicas (ZAP) y el código de `desktop/src-tauri` más allá de su configuración y permisos.
 
 ## Resumen
 
 | Severidad | Cantidad |
 |---|---|
 | Alta | 0 |
-| Media | 1 |
-| Baja | 2 |
+| Media | 2 |
+| Baja | 3 |
 
 Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10) y espacio de usuario sin límites en Firestore (SEC-14).
 
@@ -37,6 +37,12 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 
 ### Media
 
+**SEC-17 — La rama `main` y el repositorio no tienen protecciones activadas.** Verificado con la API de GitHub (2026-09-30): `main` no está protegida y no hay *rulesets*; *secret scanning*, *push protection* y *Dependabot security updates* están desactivados. Un push directo, una reescritura del historial o un secreto subido por error no encuentran ninguna barrera previa: gitleaks y el resto del CI avisan **después** de que el cambio ya está en `main` (y, con la integración con Git, desplegado). En un repositorio público estas funciones son gratuitas.
+*Recomendación (Settings del repositorio):*
+1. **Code security → Secret scanning** y **Push protection**: activar ambos (bloquea el push que contiene un secreto conocido).
+2. **Code security → Dependabot security updates**: activar.
+3. **Rules → Rulesets → New branch ruleset** sobre `main`: bloquear *force pushes* y borrado (sin fricción); opcionalmente exigir PR y que el CI esté en verde antes de fusionar.
+
 **SEC-09 — `/api/auth/limit` da falsa sensación de protección**
 `src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control; las reglas de contraseña del formulario (8 caracteres, mayúscula y número) tampoco se aplican fuera del navegador.
 *Decisión:* no usar App Check obligatorio, porque la app de escritorio usa Firebase Auth y Firestore directamente y no puede obtener tokens de reCAPTCHA desde `tauri://localhost`.
@@ -45,6 +51,9 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 ### Baja
 
 **SEC-11 — Sin CSP estricta con nonces.** `script-src` mantiene `'unsafe-inline'`. Quitarlo exige nonces por petición y render dinámico. Riesgo aceptado por ahora.
+
+**SEC-16 — El cliente de escritorio no define una CSP.** `desktop/src-tauri/tauri.conf.json` tiene `"csp": null`. El alcance de un XSS en el webview es limitado: solo se expone el comando de ejemplo `greet`, y los permisos son `core:default` y `opener:default` (sin sistema de archivos ni shell), pero falta la defensa en profundidad que sí tiene la web. Revisado solo en configuración y permisos; el resto de `src-tauri` no se auditó.
+*Recomendación:* definir una CSP equivalente a la de la web (`default-src 'self'`; `connect-src` para la URL de la API y Firebase; `frame-src` para `youtube-nocookie.com`; `img-src https: data:`) y **probarla ejecutando la app** antes de publicarla.
 
 **SEC-15 — Privacidad.** Firebase Analytics envía datos de uso a Google. Falta aviso de privacidad/cookies si el sitio se abre a público real.
 
@@ -64,4 +73,4 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
 4. ~~SEC-10~~ (hecho).
-5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho; falta publicar las reglas). Resto de bajas: SEC-11 y SEC-15.
+5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho; falta publicar las reglas). Resto de bajas: SEC-11, SEC-15 y SEC-16. Nueva media: SEC-17 (protecciones del repositorio).
