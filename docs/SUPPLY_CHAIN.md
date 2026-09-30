@@ -61,10 +61,13 @@ lo que ya pasó las pruebas.
 
 ## Configuración única en GitHub (la hace el mantenedor)
 
-1. **Settings → Actions → General → Workflow permissions → «Allow GitHub Actions to create and approve
-   pull requests».** Sin esto release-please no puede abrir el PR de release.
-2. Tras la primera publicación, **Packages → streaming-sntx → Package settings → Change visibility → Public**
-   (los paquetes nuevos nacen privados). La etiqueta OCI `source` de la imagen ya lo enlaza con el repositorio.
+**Settings → Actions → General → Workflow permissions → «Allow GitHub Actions to create and approve pull
+requests».** Sin esto release-please falla con «GitHub Actions is not permitted to create or approve pull
+requests». (El paquete de GHCR hereda la visibilidad pública del repositorio; no hay que cambiarla.)
+
+Los PR que abre release-please los crea el `GITHUB_TOKEN`, y GitHub no lanza otros workflows por eventos
+de ese token: el PR de release no ejecuta el CI. No pasa nada, porque el CI corre sobre `main` al
+fusionarlo y `release.yml` solo publica si ese CI termina en verde.
 
 ## Dependencias
 
