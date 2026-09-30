@@ -1,0 +1,43 @@
+# Secretos: NUNCA deben entrar en el contexto de build ni en la imagen.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+serviceAccount*.json
+
+# Control de versiones y herramientas
+.git
+.github
+.claude
+.vercel
+.vscode
+
+# Se regeneran dentro de la imagen
+node_modules
+.next
+out
+coverage
+
+# No forman parte de la web
+desktop
+docs
+tests
+scripts
+db
+Ejemplos de front
+*.md
+LICENSE
+
+# Configuración de pruebas y de otros despliegues
+vitest*.mjs
+eslint.config.mjs
+firebase.json
+firestore.*
+.vercelignore
+
+# Docker y logs
+Dockerfile
+docker-compose*.yml
+.dockerignore
+*.log

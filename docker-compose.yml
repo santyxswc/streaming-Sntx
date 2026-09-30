@@ -1,0 +1,38 @@
+# Ejecuta la imagen de producción en local:  docker compose up --build
+#
+# - Las variables NEXT_PUBLIC_* (públicas) se leen de tu .env al compilar la imagen.
+# - Los secretos (claves de API, DATABASE_URL, cuenta de servicio...) se inyectan al
+#   arrancar con `env_file`; nunca forman parte de la imagen.
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+        NEXT_PUBLIC_CAFECITO_USERNAME: ${NEXT_PUBLIC_CAFECITO_USERNAME:-}
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:-}
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:-}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-}
+        NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID:-}
+    image: streaming-sntx:local
+    # Solo accesible desde tu máquina (127.0.0.1). Si el puerto 3000 está ocupado, por
+    # ejemplo por `npm run dev`, usa otro:  WEB_PORT=3100 docker compose up
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    # Endurecimiento del contenedor
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1000,gid=1000
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
