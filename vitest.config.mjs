@@ -20,7 +20,7 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/lib/**', 'src/server/**', 'src/config/**', 'src/app/api/**'],
       reporter: ['text-summary', 'json-summary', 'lcov'],
-      thresholds: { statements: 29, branches: 20, functions: 29, lines: 31 },
+      thresholds: { statements: 30, branches: 21, functions: 30, lines: 32 },
     },
   },
 });

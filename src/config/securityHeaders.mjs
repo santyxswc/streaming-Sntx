@@ -98,7 +98,9 @@ export const publicCorsHeaders = [
 
 export function buildHeaders({ isProd, https = false }) {
   return [
-    { source: '/:path*', headers: buildSecurityHeaders({ isProd, https }) },
+    // `/embed/*` (página puente de YouTube para el escritorio) define sus propias cabeceras: necesita
+    // poder ser enmarcada por Tauri, lo que choca con X-Frame-Options y frame-ancestors 'none'.
+    { source: '/((?!embed/).*)', headers: buildSecurityHeaders({ isProd, https }) },
     ...PUBLIC_CORS_ROUTES.map((source) => ({ source, headers: publicCorsHeaders })),
   ];
 }

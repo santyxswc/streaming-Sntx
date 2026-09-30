@@ -110,6 +110,20 @@ describe('buildSecurityHeaders', () => {
   });
 });
 
+describe('página puente /embed', () => {
+  const rules = buildHeaders({ isProd: true });
+  const globalRule = rules.find((r) => header(r.headers, 'X-Frame-Options'));
+
+  it('las cabeceras globales (X-Frame-Options DENY) no se aplican a /embed/*', () => {
+    const matches = (path) => new RegExp(`^${globalRule.source.replace(/\(\?!/g, '(?!')}$`).test(path);
+    expect(matches('/embed/WbziExW1-i4')).toBe(false);
+    expect(matches('/')).toBe(true);
+    expect(matches('/peliculas/inception')).toBe(true);
+    expect(matches('/api/health')).toBe(true);
+    expect(matches('/embedded-cosas')).toBe(true);
+  });
+});
+
 describe('CORS', () => {
   const rules = buildHeaders({ isProd: true });
   const corsSources = rules
