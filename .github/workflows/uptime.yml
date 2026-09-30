@@ -1,6 +1,7 @@
 name: Disponibilidad
 
-# Monitor externo de producción: cada 15 minutos hace GET a /api/health, /api/health/db y la
+# Monitor externo de producción: programado cada 15 minutos (GitHub puede retrasar u omitir disparos
+# programados; no es un SLA) hace GET a /api/health, /api/health/db y la
 # home (scripts/uptime-check.sh). Si falla, abre una incidencia con la etiqueta `uptime`
 # (y GitHub te avisa por correo); cuando se recupera, la cierra. No depende de los logs de
 # Vercel, que caducan en ~1 h en el plan Hobby.

@@ -63,7 +63,7 @@ búsquedas. Filtra por nivel `error` o `warn` para ver solo lo que requiere aten
 copia el texto relevante al empezar el incidente o se perderá.
 
 **Monitor y alertas.** El workflow `Disponibilidad` (`.github/workflows/uptime.yml`) comprueba
-producción cada ~15 minutos desde GitHub y **abre una incidencia con la etiqueta `uptime`** si
+producción con una programación de 15 minutos desde GitHub (GitHub puede retrasar u omitir los disparos programados cuando hay carga; el intervalo real no está garantizado) y **abre una incidencia con la etiqueta `uptime`** si
 algo falla (GitHub te avisa por correo); la cierra cuando se recupera. No depende de los logs.
 `scripts/uptime-check.sh` hace lo mismo a mano. `scripts/error-budget.sh` calcula la disponibilidad
 de los últimos 30 días frente al objetivo de **99,5 %** (≈ 3,6 h de caída al mes) y cuánto

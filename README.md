@@ -274,7 +274,7 @@ flowchart LR
 - **Contenedor:** imagen endurecida (usuario no root, sistema de archivos de solo lectura, sin npm en tiempo de ejecución). Ver [`docs/DOCKER.md`](docs/DOCKER.md).
 - **Comprobación de protecciones del repositorio:** `scripts/check-repo-posture.sh` consulta la API de GitHub (solo lectura) y falla si falta alguna.
 - **Calidad en cada commit y en el CI:** hook de pre-commit con gitleaks, lint y pruebas; cobertura con umbral; e2e con Playwright que también falla ante violaciones de la CSP; análisis dinámico semanal con OWASP ZAP ([`dast.yml`](.github/workflows/dast.yml), solo informe).
-- **Observabilidad:** logs JSON estructurados con `route` y `requestId` y redacción de secretos (`src/server/observability`), monitor de disponibilidad cada 15 min que abre una incidencia si producción cae (`uptime.yml`), presupuesto de errores (`scripts/error-budget.sh`) y Speed Insights. Ver [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+- **Observabilidad:** logs JSON estructurados con `route` y `requestId` y redacción de secretos (`src/server/observability`), monitor de disponibilidad programado (cada 15 min, según GitHub) que abre una incidencia si producción cae (`uptime.yml`), presupuesto de errores (`scripts/error-budget.sh`) y Speed Insights. Ver [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 - **Node:** versión única en [`.nvmrc`](.nvmrc), que usan el CI y `engines`; la imagen Docker usa la misma versión mayor.
 
 Índice completo de la documentación en [`docs/README.md`](docs/README.md).
