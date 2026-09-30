@@ -273,15 +273,18 @@ Tras rotar un secreto en producción, actualiza también tu `.env` local si lo u
 | Favoritos (Firestore) | No | Exportación de Firestore desde Google Cloud |
 | Cuentas (Firebase Auth) | No | Exportación de usuarios de Firebase |
 
-**Estado actual:** no hay copias de seguridad propias configuradas. Acciones recomendadas:
+**Estado actual:** hay un script de copia manual, pero ninguna copia automática. Acciones recomendadas:
 
 1. Comprueba en Neon la **ventana de restauración a un punto en el tiempo** que incluye tu plan y cómo
    se usa (ramas de restauración).
-2. Copia manual periódica de lo no reproducible:
+2. Copia manual periódica de lo no reproducible con `scripts/backup-chat.sh`:
    ```bash
-   pg_dump "$DATABASE_URL" -Fc -t chat_messages -t chat_user_profiles -f backup-chat-$(date +%F).dump
+   scripts/backup-chat.sh        # genera backups/chat-AAAAMMDD-HHMM.sql.gz
    ```
-   Guarda el archivo **fuera del repositorio** y cifrado: contiene apodos y `uid`.
+   Usa `pg_dump` o, si no está instalado, un contenedor de Docker con el cliente de la misma versión que el
+   servidor de Neon (`PG_IMAGE`, hoy `postgres:18-alpine`). Solo lee, valida el archivo y borra el parcial si falla.
+   Guarda el resultado **fuera del repositorio** y cifrado: contiene mensajes y `uid`. No lo subas a un
+   artefacto de GitHub: en un repositorio público sería visible.
 3. Prueba una restauración al menos una vez, en una base distinta: una copia que nunca se restauró no
    está verificada.
 
