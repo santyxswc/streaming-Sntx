@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-sntx \"vitest run --config vitest.rules.config.mjs\"",
     "migrate:genres": "node scripts/migrate-genre-labels.mjs",
     "ingest:tmdb": "node scripts/ingest-tmdb.mjs",
     "ingest:tmdb:movie:full": "cross-env TMDB_INGEST_FULL=1 TMDB_INGEST_TYPE=movie node scripts/ingest-tmdb.mjs",
@@ -36,6 +37,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4",
     "cross-env": "^7.0.3",
     "eslint": "^9",

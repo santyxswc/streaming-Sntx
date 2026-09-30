@@ -1,22 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reglas Seguras para Producción: permite lectura pública pero bloquea escritura
+    // Catálogo público: lectura abierta, escritura solo desde el servidor (Admin SDK
+    // se salta estas reglas).
     match /movies/{movie} {
       allow read: if true;
-      allow write: if false; 
+      allow write: if false;
     }
     match /series/{serie} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Permitir que cada usuario lea y escriba su propia información
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
-    
-    // Regla por defecto: bloquea todo lo demás
+
+    // Tope de favoritos por usuario. Las reglas no pueden recorrer una lista para validar
+    // cada elemento, así que se acota el número; el límite de 1 MiB por documento de
+    // Firestore acota además el tamaño total.
+    function withinWatchlistLimit() {
+      return request.resource.data.items is list
+          && request.resource.data.items.size() <= 500;
+    }
+
+    // Lo único que los clientes (web y escritorio) guardan en Firestore: la lista de
+    // favoritos, en un único documento `{ items: [...] }`. No se admiten otras rutas,
+    // subcolecciones ni campos, para que un usuario no pueda usar su espacio como
+    // almacenamiento arbitrario.
+    match /users/{userId}/userData/watchlist {
+      allow read, delete: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(['items'])
+          && request.resource.data.keys().hasAll(['items'])
+          && withinWatchlistLimit();
+
+      // Con merge, `request.resource.data` es el documento resultante. Se valida qué
+      // campos cambian (no todos los que existen) para no romper documentos antiguos
+      // que ya tengan algún campo extra.
+      allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
+          && request.resource.data.keys().hasAll(['items'])
+          && withinWatchlistLimit();
+    }
+
+    // Regla por defecto: bloquea todo lo demás.
     match /{document=**} {
       allow read, write: if false;
     }
