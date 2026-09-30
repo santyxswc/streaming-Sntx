@@ -11,7 +11,7 @@
 |---|---|
 | Alta | 0 |
 | Media | 0 |
-| Baja | 3 |
+| Baja | 4 |
 
 Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10), espacio de usuario sin límites en Firestore (SEC-14), protecciones del repositorio (SEC-17) y las 9 alertas de CodeQL (SEC-18).
 
@@ -43,6 +43,13 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 Ninguno abierto.
 
 ### Baja
+
+**SEC-19 — Primer informe de ZAP baseline (2026-09-30, workflow `dast.yml`, build de producción en modo demo).** 0 altas, 3 medias, 4 bajas, 3 informativas. Ninguna es un fallo nuevo:
+- *CSP `script-src` y `style-src` con `unsafe-inline`* (medias): es SEC-11, aceptado.
+- *CSP con comodines* (media): los de `connect-src` hacia `*.googleapis.com`, `*.firebaseio.com` y `*.gstatic.com`, y `*.firebaseapp.com` en `frame-src`, permitían enviar datos a cualquier bucket o base de datos de Google. **Corregido:** `connect-src` lista ahora los hosts exactos que contactan los SDK (Auth, Firestore, Installations y Analytics, sacados del código de los paquetes) y `frame-src` usa el dominio de Auth del proyecto. Quedan los comodines `*.google-analytics.com` y `*.googletagmanager.com` de Analytics. Verificado con un navegador real contra el proyecto de Firebase: un inicio de sesión fallido llega a `identitytoolkit` y muestra el error, sin violaciones de CSP. **No verificado de forma automática:** Firestore y la renovación de sesión (`securetoken`), que exigen una sesión real.
+- *Cross-Origin-Opener-Policy* (baja): ya se envía `same-origin-allow-popups`, deliberado para el flujo de ventanas emergentes de Firebase Auth. *Cross-Origin-Embedder-Policy* y *Cross-Origin-Resource-Policy* (bajas): activarlas rompería los tráilers de YouTube y las imágenes de TMDB, que no envían las cabeceras correspondientes. Aceptado.
+- *Dangerous JS Functions* (baja): falso positivo. Es un método llamado `eval` de una clase de una librería del bundle, no la función `eval()`, y la CSP de producción no admite `unsafe-eval`.
+- *Informativas* (aplicación moderna, contenido cacheable): sin acción.
 
 **SEC-11 — Sin CSP estricta con nonces.** `script-src` mantiene `'unsafe-inline'`. Quitarlo exige nonces por petición y render dinámico. Riesgo aceptado por ahora.
 
