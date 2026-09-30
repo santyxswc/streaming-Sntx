@@ -10,10 +10,10 @@
 | Severidad | Cantidad |
 |---|---|
 | Alta | 0 |
-| Media | 2 |
+| Media | 1 |
 | Baja | 3 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10) y espacio de usuario sin límites en Firestore (SEC-14).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10), espacio de usuario sin límites en Firestore (SEC-14), protecciones del repositorio (SEC-17) y las 9 alertas de CodeQL (SEC-18).
 
 ## Corregido
 
@@ -31,17 +31,13 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-13 | `images.remotePatterns` con `hostname: '**'` | Sustituido por una lista cerrada en `src/config/imageHosts.mjs` (`image.tmdb.org`, `static.tvmaze.com`, `cdn.cafecito.app`) con tests. Hoy las imágenes van `unoptimized`, por lo que el comodín no estaba activo, pero habría abierto un proxy de imágenes si se activaba el optimizador. La CSP mantiene `img-src https:` porque el catálogo antiguo puede contener otros dominios. |
 | SEC-10 | 7 avisos moderados de dependencias que colgaban de `firebase-admin` 13 | Migrado a `firebase-admin` 14.5.0 y `npm audit fix` para el `uuid` transitivo: **0 vulnerabilidades** en producción. La v14 elimina el espacio de nombres antiguo (`admin.auth()`, `admin.firestore()`, `admin.apps`…), lo que habría roto el chat, la moderación y el catálogo de Firestore en cada petición: el CI no lo detectaba porque nunca ejecuta esa parte y los tests simulaban la API antigua. Se migró a las importaciones modulares (`firebase-admin/app`, `/auth`, `/firestore`), se normaliza el código de error de Auth (con o sin prefijo `auth/`) y se añadió `firebaseAdminSdk.test.js`, que ejecuta el SDK real sin mocks; se comprobó que falla 4 de 4 con el código antiguo. Requiere Node ≥ 22. |
 | SEC-14 | `users/{userId}/**` permitía a cada usuario crear cualquier documento o subcolección, con cualquier contenido y tamaño | Las reglas aceptan solo `users/{uid}/userData/watchlist` (lo único que escriben web y escritorio), con `items` como lista de hasta 500 elementos y sin otros campos al crear. En actualizaciones se valida qué campos cambian, no cuáles existen, para no romper documentos antiguos. 19 tests con el emulador (`npm run test:rules`, también en el CI): con las reglas antiguas fallan 9. **Pendiente de despliegue:** las reglas del repositorio no se publican solas (`firebase deploy --only firestore:rules` o pegarlas en la consola). |
+| SEC-17 | `main` sin protección y sin secret scanning, push protection ni Dependabot alerts (verificado con la API de GitHub el 2026-09-30) | Activados y verificados con la API: ruleset `Proteger Main` activo sobre la rama por defecto (bloquea borrado y *force push*), Dependabot alerts y security updates, secret scanning, push protection y reporte privado de vulnerabilidades (el canal que promete `SECURITY.md` no existía hasta ahora). No se exige PR ni CI en verde para fusionar: es decisión de flujo de trabajo. Opcionales sin activar: *non-provider patterns* y *validity checks*. |
+| SEC-18 | 9 alertas de CodeQL en la primera ejecución del análisis (4 *high*, 5 *medium*): inyección en logs y cadena de formato con texto del usuario (`multi-search`, `ingest/tmdb`), `stripHtml` que deja etiquetas si se anidan, regex sin ancla `tvmaze\.com`, y una lectura de archivo enviada por HTTP | `src/lib/text.mjs` con `sanitizeForLog` (sin saltos de línea ni caracteres de control, longitud acotada), `stripHtml` que repite la pasada hasta estabilizarse y `isTvmazeUrl` con el dominio anclado; los logs usan una cadena de formato constante con los valores como argumentos. De paso, `ingest/tmdb` ahora valida `page` y `maxPages` como enteros positivos (antes llegaban sin comprobar el tipo). 33 tests nuevos. La alerta `js/file-access-to-http` de `scripts/ingest-tvmaze.mjs` es un falso positivo (el script lee su archivo de progreso local y consulta una URL fija): se descarta en GitHub con justificación en lugar de suprimirla en el código. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
 
 ### Media
-
-**SEC-17 — La rama `main` y el repositorio no tienen protecciones activadas.** Verificado con la API de GitHub (2026-09-30): `main` no está protegida y no hay *rulesets*; *secret scanning*, *push protection* y *Dependabot security updates* están desactivados. Un push directo, una reescritura del historial o un secreto subido por error no encuentran ninguna barrera previa: gitleaks y el resto del CI avisan **después** de que el cambio ya está en `main` (y, con la integración con Git, desplegado). En un repositorio público estas funciones son gratuitas.
-*Recomendación (Settings del repositorio):*
-1. **Code security → Secret scanning** y **Push protection**: activar ambos (bloquea el push que contiene un secreto conocido).
-2. **Code security → Dependabot security updates**: activar.
-3. **Rules → Rulesets → New branch ruleset** sobre `main`: bloquear *force pushes* y borrado (sin fricción); opcionalmente exigir PR y que el CI esté en verde antes de fusionar.
 
 **SEC-09 — `/api/auth/limit` da falsa sensación de protección**
 `src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control; las reglas de contraseña del formulario (8 caracteres, mayúscula y número) tampoco se aplican fuera del navegador.
@@ -73,4 +69,4 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
 4. ~~SEC-10~~ (hecho).
-5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho; falta publicar las reglas). Resto de bajas: SEC-11, SEC-15 y SEC-16. Nueva media: SEC-17 (protecciones del repositorio).
+5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho; falta publicar las reglas). Resto de bajas: SEC-11, SEC-15 y SEC-16.

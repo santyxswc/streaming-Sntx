@@ -166,10 +166,10 @@ informe de auditoría.
 | ID | Amenaza | Cat. | Controles existentes | Residual |
 |---|---|---|---|---|
 | T-24 | Dependencia vulnerable o maliciosa | T, E | Dependabot en npm, cargo, acciones e imágenes; `npm audit` bloqueante (alto y crítico); lockfile; `npm ci --ignore-scripts` en la imagen; CodeQL | **Medio:** un paquete malicioso aún no reportado no se detecta; en local las dependencias se instalan con scripts |
-| T-25 | Secretos en el repositorio | I | `.env*` ignorados; gitleaks sobre el historial completo en cada push y PR; `.vercelignore` y `.dockerignore` | **Medio-bajo:** gitleaks avisa *después* del push. El secret scanning nativo y su *push protection*, que lo bloquean antes de entrar al historial, están **desactivados** (verificado el 2026-09-30, SEC-17) |
+| T-25 | Secretos en el repositorio | I | `.env*` ignorados; gitleaks sobre el historial completo en cada push y PR; `.vercelignore` y `.dockerignore` | Bajo: además de gitleaks (que avisa tras el push), el secret scanning nativo y su *push protection* bloquean el push antes de que entre al historial (activados y verificados el 2026-09-30, SEC-17) |
 | T-26 | Manipulación del pipeline (acción o herramienta comprometida) | T, E | Acciones fijadas por SHA; permisos mínimos del `GITHUB_TOKEN`; Hadolint y Trivy como contenedores fijados por digest | Bajo-medio |
 | T-27 | Imagen con vulnerabilidades o demasiado privilegiada | E | Hadolint; Trivy (puerta en CRITICAL con corrección); base fijada por digest; usuario no root; sin `npm` en el runtime; solo lectura; `cap_drop: ALL` | Bajo |
-| T-28 | Cambio malicioso o accidental en `main` | T | El CI se ejecuta en cada push y PR, pero **no bloquea** nada | **Medio:** `main` **no está protegida** ni hay rulesets (verificado el 2026-09-30, SEC-17): se puede hacer push directo, reescribir el historial o borrar la rama |
+| T-28 | Cambio malicioso o accidental en `main` | T | Ruleset `Proteger Main` activo: bloquea el borrado de la rama y los *force push*. El CI corre en cada push y PR pero no impide fusionar | Bajo-medio: sigue permitido el push directo sin revisión ni CI en verde; es una decisión de flujo de trabajo de un solo mantenedor |
 
 ### 5.7 Cliente de escritorio y terceros
 
@@ -201,7 +201,7 @@ informe de auditoría.
 | Fallo abierto del rate limit si Redis cae | Aceptado | Se prioriza la disponibilidad; queda un aviso en logs y el límite en memoria por instancia |
 | Sin API de borrado ni bloqueo en moderación | Aceptado | Se resuelve a mano; ver RUNBOOK |
 | Sin copias de seguridad propias de chat y perfiles | **Acción recomendada** | Comprobar la ventana de restauración de Neon y valorar un `pg_dump` periódico |
-| Protección de `main`, secret scanning y push protection (SEC-17) | **Pendiente de activar** | Ajustes gratuitos del repositorio, ver T-25 y T-28 |
+| Push directo a `main` sin PR ni CI en verde | Aceptado | Con un único mantenedor, exigir PR añade fricción; el ruleset ya evita reescribir o borrar el historial (SEC-17) |
 
 ## 8. Supuestos y fuera de alcance
 

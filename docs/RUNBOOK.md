@@ -91,7 +91,7 @@ relevante al empezar el incidente o se perderá.
 **Cuándo:** alerta del job **Secret scan** (gitleaks), una clave pegada en un chat, issue o captura, o
 un `.env` subido por error.
 
-0. **Prevención:** activa *Secret scanning* y *Push protection* en Settings → Code security del repositorio: bloquean el push que contiene un secreto conocido antes de que llegue al historial (SEC-17).
+0. **Prevención ya activa:** *Secret scanning* y *Push protection* del repositorio bloquean el push que contiene un secreto conocido antes de que llegue al historial. Si un push se rechaza por esto, **no lo saltes**: rota ese secreto (paso 1) aunque no haya llegado a subirse.
 1. **Contener, sin esperar a investigar:** rota el secreto (tabla de la sección 6). Un secreto que
    estuvo público debe darse por comprometido aunque se borre el commit.
 2. Actualiza el valor en Vercel y **redespliega**.
