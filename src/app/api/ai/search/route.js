@@ -2,23 +2,30 @@ import { NextResponse } from 'next/server';
 import { findMediaForAiLookup } from '@/server/catalog/catalogRepository';
 import { chatCompletion } from '@/server/integrations/deepseek';
 import { rateLimit } from '@/server/http/rateLimit';
+import { parseSearchQuery, parseAiPrediction } from '@/lib/aiSearch';
 
 export const runtime = 'nodejs';
 
 export async function POST(req) {
   try {
     // Apply Rate Limit: 5 requests per minute for AI
-    const limitResponse = rateLimit(req, {
+    const limitResponse = await rateLimit(req, {
       limit: 5,
       windowMs: 60000,
       id: 'ai-search',
     });
     if (limitResponse) return limitResponse;
 
-    const { query: userQuery } = await req.json();
-
-    if (!userQuery) {
-      return NextResponse.json({ success: false, error: 'Query is required' }, { status: 400 });
+    let userQuery;
+    try {
+      const body = await req.json();
+      userQuery = parseSearchQuery(body?.query);
+    } catch (e) {
+      // JSON ilegible o consulta inválida: 400 con un mensaje que sí es seguro mostrar.
+      return NextResponse.json(
+        { success: false, error: e.status === 400 ? e.message : 'Solicitud inválida' },
+        { status: 400 }
+      );
     }
 
     // Check if DeepSeek is configured
@@ -60,10 +67,15 @@ export async function POST(req) {
     ];
 
     const aiResponseRaw = await chatCompletion(identificationPrompt);
-    const aiPrediction = JSON.parse(aiResponseRaw);
+    const aiPrediction = parseAiPrediction(aiResponseRaw);
 
-    if (!aiPrediction.titleSpanish && !aiPrediction.titleOriginal) {
-        throw new Error("La IA no pudo identificar ninguna producción.");
+    if (!aiPrediction) {
+      // El modelo respondió algo inutilizable: fallo del proveedor, no del cliente.
+      console.error('[ai/search] Respuesta del modelo no utilizable');
+      return NextResponse.json(
+        { success: false, error: 'No se pudo completar la búsqueda con IA' },
+        { status: 502 }
+      );
     }
 
     const titlesToTry = [aiPrediction.titleSpanish, aiPrediction.titleOriginal].filter(Boolean);
@@ -92,7 +104,7 @@ export async function POST(req) {
     const displayTitle = aiPrediction.titleSpanish || aiPrediction.titleOriginal;
     return NextResponse.json({ 
       success: true, 
-      message: `¡Identifiqué lo que buscas! Parece que es "${displayTitle}" (${aiPrediction.year}). Lamentablemente aún no la tenemos disponible en nuestro catálogo, pero he tomado nota y la agregaremos muy pronto para ti.`,
+      message: `¡Identifiqué lo que buscas! Parece que es "${displayTitle}"${aiPrediction.year ? ` (${aiPrediction.year})` : ''}. Lamentablemente aún no la tenemos disponible en nuestro catálogo, pero he tomado nota y la agregaremos muy pronto para ti.`,
       data: null 
     });
 

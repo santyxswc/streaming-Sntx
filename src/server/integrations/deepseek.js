@@ -2,6 +2,7 @@ import 'server-only';
 import axios from 'axios';
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
+const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * Sends a message to DeepSeek and returns the response.
@@ -21,9 +22,13 @@ export const chatCompletion = async (messages, options = {}) => {
       model: 'deepseek-chat',
       messages,
       temperature: 0.7,
+      // La respuesta es un JSON corto: acotar la salida limita el coste por llamada.
+      max_tokens: 400,
       response_format: { type: 'json_object' },
       ...options
     }, {
+      // Sin timeout, una respuesta colgada retiene la función hasta su límite de duración.
+      timeout: REQUEST_TIMEOUT_MS,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`

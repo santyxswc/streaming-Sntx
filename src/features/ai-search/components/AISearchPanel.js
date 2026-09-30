@@ -5,6 +5,7 @@ import { Sparkles, X, Send, Loader2, Play, Info, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { MAX_QUERY_LENGTH } from '@/lib/aiSearch';
 
 const EXAMPLE_QUERIES = [
   'Una película donde viajan en un tren en la nieve con conflicto social',
@@ -61,6 +62,7 @@ export default function AISearchPanel({ onResultNavigate, autoFocus = false, cla
           ref={inputRef}
           autoFocus={autoFocus}
           type="text"
+          maxLength={MAX_QUERY_LENGTH}
           placeholder="Ej: una película donde viajan en un tren en la nieve con conflicto social..."
           className="w-full bg-card-bg border-2 border-white/10 focus:border-primary/60 rounded-2xl py-4 md:py-5 px-5 md:px-7 text-base md:text-lg outline-none transition-all placeholder:text-gray-600 font-medium pr-14 md:pr-16 shadow-inner"
           value={query}
