@@ -11,9 +11,9 @@
 |---|---|
 | Alta | 0 |
 | Media | 2 |
-| Baja | 5 |
+| Baja | 3 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07) y sondeo de la base de datos (SEC-08).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12) y proxy de imágenes abierto latente (SEC-13).
 
 ## Corregido
 
@@ -27,6 +27,8 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-04 | `/api/ai/search` sin validación de entrada, sin `timeout` y con salida del modelo sin normalizar | `query` debe ser texto de 1 a 300 caracteres (el input del cliente comparte el límite), `timeout` de 15 s y `max_tokens` de 400 en DeepSeek, y la respuesta del modelo se trata como entrada no confiable: JSON inválido → 502, tipos y longitudes normalizados, `type` restringido a `movie`/`series`. Riesgo residual: la ruta sigue sin exigir sesión. |
 | SEC-07 | Los tokens de Firebase no se comprobaban contra revocación: un usuario deshabilitado conservaba acceso ~1 h | `verifyBearerUid(header, { checkRevoked })`. Se activa en moderación, `auth/admin` y en el envío de mensajes del chat (rutas de escritura y administración); las lecturas no pagan la llamada de red extra. `auth/id-token-revoked` y `auth/user-disabled` devuelven «tu sesión ya no es válida». |
 | SEC-08 | `/api/health/db` público, sin límite y con una consulta real a Neon en cada petición | Rate limit de 30/min por IP y caché de 30 s (5 s si falla) con el `createTtlCache` existente, más `Cache-Control: no-store`. Se mantiene el campo `catalog` porque el README lo documenta. |
+| SEC-12 | `typescript.ignoreBuildErrors: true` ocultaba errores de tipos en el build | Eliminado. La web no contiene ficheros TypeScript, así que no cambia el resultado, pero un futuro `.ts` ya no fallará en silencio. |
+| SEC-13 | `images.remotePatterns` con `hostname: '**'` | Sustituido por una lista cerrada en `src/config/imageHosts.mjs` (`image.tmdb.org`, `static.tvmaze.com`, `cdn.cafecito.app`) con tests. Hoy las imágenes van `unoptimized`, por lo que el comodín no estaba activo, pero habría abierto un proxy de imágenes si se activaba el optimizador. La CSP mantiene `img-src https:` porque el catálogo antiguo puede contener otros dominios. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
@@ -43,10 +45,6 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 ### Baja
 
 **SEC-11 — Sin CSP estricta con nonces.** `script-src` mantiene `'unsafe-inline'`. Quitarlo exige nonces por petición y render dinámico. Riesgo aceptado por ahora.
-
-**SEC-12 — `typescript.ignoreBuildErrors: true` en `next.config.mjs`.** Oculta errores de tipos en el build. El proyecto es JavaScript, pero conviene retirarlo.
-
-**SEC-13 — `images.remotePatterns` con `hostname: '**'`.** Con `unoptimized: true` no hay proxy de imágenes, pero cualquier `https:` se acepta. Limitar a los dominios reales del catálogo.
 
 **SEC-14 — Reglas de Firestore sin validación de esquema ni tamaño en `users/{userId}/**`.** Cada usuario puede escribir datos arbitrarios en su propio espacio. Bajo impacto; añadir límites si crece el uso.
 
@@ -68,4 +66,4 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
 4. SEC-10 (`firebase-admin` 14) con pruebas.
-5. Baja: SEC-11 a SEC-15.
+5. ~~SEC-12 y SEC-13~~ (hecho). Resto de bajas: SEC-11, SEC-14 y SEC-15.
