@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { discoverTmdbPage, isTmdbConfigured } from '@/server/integrations/tmdb';
 import { saveMediaBatch, updateFilterMetadata } from '@/server/catalog/catalogRepository';
 import { getNeonSql } from '@/server/db/neonSql';
+import { rateLimit } from '@/server/http/rateLimit';
+import { safeEqual } from '@/server/shared/safeEqual';
 
 export const runtime = 'nodejs';
 
@@ -45,13 +47,23 @@ export async function POST(request) {
       process.env.SCRAPE_SECRET_KEY || // nombre anterior, aún aceptado
       (isDev ? 'dev-ingest-secret' : null);
     if (!secretKey) {
+      // Mensaje genérico: no revelar a un anónimo qué variable falta.
+      console.error('[ingest-tmdb] INGEST_SECRET_KEY no configurada');
       return NextResponse.json(
-        { success: false, error: 'INGEST_SECRET_KEY no configurada' },
-        { status: 500 }
+        { success: false, error: 'Servicio no configurado' },
+        { status: 503 }
       );
     }
 
-    if (apiKey !== secretKey) {
+    if (!safeEqual(apiKey, secretKey)) {
+      // Solo se cuentan los intentos fallidos: la ingesta legítima hace muchas
+      // peticiones seguidas y no debe bloquearse, pero adivinar la clave sí.
+      const limited = rateLimit(request, {
+        limit: 10,
+        windowMs: 5 * 60_000,
+        id: 'ingest-auth-fail',
+      });
+      if (limited) return limited;
       return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
     }
 
@@ -159,6 +171,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Ingest TMDB API Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Error interno del servidor' },
+      { status: 500 }
+    );
   }
 }

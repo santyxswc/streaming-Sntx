@@ -1,17 +1,6 @@
 import 'server-only';
-import crypto from 'crypto';
+import { safeEqual } from '@/server/shared/safeEqual';
 import { verifyBearerUid } from '@/server/db/firebaseAdmin';
-
-function timingSafeEqual(a, b) {
-  const sa = String(a ?? '');
-  const sb = String(b ?? '');
-  if (sa.length !== sb.length) return false;
-  try {
-    return crypto.timingSafeEqual(Buffer.from(sa, 'utf8'), Buffer.from(sb, 'utf8'));
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Acceso a endpoints de moderación del chat.
@@ -23,7 +12,7 @@ export async function isChatModeratorAuthorized(req) {
   const headerSecret = req.headers.get('x-moderation-secret');
   if (secret) {
     if (headerSecret) {
-      if (timingSafeEqual(headerSecret, secret)) {
+      if (safeEqual(headerSecret, secret)) {
         return { ok: true, via: 'secret' };
       }
       return { ok: false, reason: 'bad_secret' };
