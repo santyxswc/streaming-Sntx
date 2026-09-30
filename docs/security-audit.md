@@ -9,11 +9,11 @@
 
 | Severidad | Cantidad |
 |---|---|
-| Alta | 3 |
-| Media | 5 |
+| Alta | 2 |
+| Media | 4 |
 | Baja | 5 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05) y fugas de configuración en errores de autenticación (SEC-06).
 
 ## Corregido
 
@@ -22,6 +22,8 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-00 | 23 vulnerabilidades en dependencias (3 críticas, 7 altas) en web y 6 en desktop | `next` 16.3.7, `npm audit fix`. Web: 7 moderadas restantes (`firebase-admin`). Desktop: 0. |
 | SEC-01 | CORS `*` en todo `/api/*`; CSP con `unsafe-eval` en producción y sin `object-src`, `base-uri`, `form-action`, `frame-ancestors`; `X-XSS-Protection` obsoleta; sin HSTS; `X-Powered-By` visible | `src/config/securityHeaders.mjs` con tests. CORS solo en rutas públicas de lectura. |
 | SEC-02 | Sin análisis automatizado de seguridad | Dependabot, CodeQL, gitleaks y `npm audit` bloqueante en CI; permisos mínimos y acciones fijadas por SHA. |
+| SEC-05 | `/api/ingest/tmdb` sin protección contra fuerza bruta, comparación de clave no constante y `error.message` en el 500 | Comparación con `safeEqual` (`timingSafeEqual`, compartida con moderación), rate limit sobre intentos **fallidos** (10 cada 5 min por IP) para no bloquear la ingesta legítima, 503 genérico si falta la clave y 500 sin detalle interno. Riesgos residuales: el límite depende de SEC-03 y el secreto `dev-ingest-secret` sigue activo solo con `next dev` (aceptado: nunca se ejecuta en Vercel y lo usa el script local). |
+| SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
 
@@ -35,20 +37,7 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 `src/app/api/ai/search/route.js:18` no valida el tipo ni la longitud de `query` y reenvía el texto a DeepSeek. No exige sesión. El límite de 5 por minuto depende de SEC-03. `src/server/integrations/deepseek.js:20` no define `timeout`. `JSON.parse` de la respuesta del modelo (línea 63) no está aislado del resto de errores.
 *Recomendación:* exigir `typeof query === 'string'` y un máximo (p. ej. 300 caracteres), `timeout` en axios, tope diario global de llamadas y, idealmente, exigir sesión de Firebase o BotID.
 
-**SEC-05 — `/api/ingest/tmdb` es un endpoint de escritura expuesto en producción con protección débil**
-`src/app/api/ingest/tmdb/route.js`:
-- Sin rate limit, así que la clave `x-api-key` se puede probar por fuerza bruta.
-- Comparación con `!==` (línea 54), no de tiempo constante. `moderationAuth.js` sí usa `timingSafeEqual`, por lo que el criterio es inconsistente.
-- Secreto por defecto `'dev-ingest-secret'` cuando `NODE_ENV === 'development'` (línea 46).
-- Devuelve `error.message` al cliente en el 500 (línea 162).
-- Un solo request puede encadenar hasta 500 llamadas a TMDB y escrituras en Postgres.
-*Recomendación:* sacar la ingesta del despliegue público (ya existe `scripts/ingest-tmdb.mjs`), o proteger con rate limit estricto, `timingSafeEqual`, sin secreto por defecto y mensaje de error genérico.
-
 ### Media
-
-**SEC-06 — Fuga de detalles de configuración en errores de autenticación**
-`src/app/api/chat/messages/route.js:115` y `src/app/api/chat/profile/route.js:18` devuelven `formatVerifyAuthError(e)`. Para errores de configuración (`MISSING_ENV`, `PROJECT_MISMATCH`, `INIT_FAILED`) el mensaje incluye ids de proyecto y referencias internas. Cualquier petición con una cabecera `Authorization: Bearer x` puede provocarlo.
-*Recomendación:* devolver un mensaje genérico al cliente y registrar el detalle solo en el servidor.
 
 **SEC-07 — Los tokens de Firebase no se comprueban contra revocación**
 `src/server/db/firebaseAdmin.js:146` usa `verifyIdToken(token)` sin `checkRevoked`. Un usuario deshabilitado o con sesión revocada conserva acceso hasta que expira el token (≈1 h). Es relevante en `chat/moderation` y `auth/admin`.
@@ -89,7 +78,7 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 
 ## Orden de corrección sugerido
 
-1. SEC-05 y SEC-06: cambios pequeños en el servidor, mucho riesgo menos.
+1. ~~SEC-05 y SEC-06~~ (hecho).
 2. SEC-04: validación de entrada, `timeout` y tope de coste.
 3. SEC-03: decidir almacén compartido o reglas del Vercel Firewall.
 4. SEC-07 y SEC-08.
