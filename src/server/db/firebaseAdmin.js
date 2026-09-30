@@ -159,28 +159,26 @@ export async function verifyBearerUid(authHeader) {
   }
 }
 
+// Prefijos de errores de configuración del servidor. Sus mensajes incluyen
+// nombres de variables, ids de proyecto o rutas internas: nunca deben llegar al cliente.
+const CONFIG_ERROR_PREFIXES = [
+  'MISSING_ENV:',
+  'INVALID_JSON:',
+  'INVALID_BASE64:',
+  'INVALID_CREDENTIALS:',
+  'PROJECT_MISMATCH:',
+  'INIT_FAILED:',
+];
+
 /**
- * Mensaje legible para respuestas API cuando verifyBearerUid falla.
+ * Mensaje seguro para respuestas API cuando verifyBearerUid falla.
+ * El detalle de los errores de configuración solo se registra en el servidor
+ * (las rutas ya hacen console.error del error original).
  */
 export function formatVerifyAuthError(err) {
   const msg = err?.message || '';
-  if (msg.startsWith('MISSING_ENV:')) {
-    return msg.replace(/^MISSING_ENV:\s*/, '');
-  }
-  if (msg.startsWith('INVALID_JSON:')) {
-    return msg.replace(/^INVALID_JSON:\s*/, '');
-  }
-  if (msg.startsWith('INVALID_BASE64:')) {
-    return msg.replace(/^INVALID_BASE64:\s*/, '');
-  }
-  if (msg.startsWith('INVALID_CREDENTIALS:')) {
-    return msg.replace(/^INVALID_CREDENTIALS:\s*/, '');
-  }
-  if (msg.startsWith('PROJECT_MISMATCH:')) {
-    return msg.replace(/^PROJECT_MISMATCH:\s*/, '');
-  }
-  if (msg.startsWith('INIT_FAILED:')) {
-    return msg.replace(/^INIT_FAILED:\s*/, '');
+  if (CONFIG_ERROR_PREFIXES.some((prefix) => msg.startsWith(prefix))) {
+    return 'Servicio de autenticación no disponible.';
   }
   if (msg === 'TOKEN_EXPIRED') {
     return 'Sesión expirada. Vuelve a iniciar sesión.';
