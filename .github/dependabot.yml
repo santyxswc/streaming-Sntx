@@ -34,3 +34,9 @@ updates:
       # init y analyze de CodeQL deben tener siempre la misma versión.
       codeql:
         patterns: ["github/codeql-action*"]
+
+  # Imagen base del Dockerfile (se propone un nuevo digest cuando cambia).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

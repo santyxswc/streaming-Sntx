@@ -97,7 +97,7 @@ tests/unit/              Tests de servicios, contratos de proveedores y capa HTT
 db/migrations/           Esquema SQL e índices de Neon
 scripts/                 Ingesta (TMDB, TVmaze), migraciones y utilidades
 desktop/                 Cliente de escritorio Tauri
-docs/                    Guías de Neon, Firebase y moderación
+docs/                    Guías de Neon, Firebase, moderación, Docker y auditoría de seguridad
 ```
 
 **Decisiones clave**
@@ -150,6 +150,14 @@ npm run tauri dev
 ```
 
 Ver [desktop/README.md](desktop/README.md).
+
+### Docker
+
+```bash
+docker compose up --build          # http://localhost:3000
+```
+
+Imagen sin privilegios y sin secretos incrustados. Detalle en [docs/DOCKER.md](docs/DOCKER.md).
 
 ## Variables de entorno
 
