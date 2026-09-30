@@ -25,6 +25,58 @@ test.describe('API y cabeceras', () => {
   });
 });
 
+test.describe('página puente de YouTube (/embed)', () => {
+  const ID = 'WbziExW1-i4';
+
+  test('solo la puede enmarcar la app de escritorio y no hereda X-Frame-Options', async ({ request }) => {
+    const res = await request.get(`/embed/${ID}?autoplay=1&mute=1`);
+    expect(res.status()).toBe(200);
+    const h = res.headers();
+    expect(h['x-frame-options']).toBeUndefined();
+    expect(h['content-security-policy']).toContain('frame-ancestors tauri://localhost');
+    expect(h['content-security-policy']).not.toMatch(/frame-ancestors[^;]*\*/);
+    expect(await res.text()).toContain(`https://www.youtube-nocookie.com/embed/${ID}?`);
+  });
+
+  test('rechaza ids inválidos y el resto de la web sigue sin poder enmarcarse', async ({ request }) => {
+    expect((await request.get('/embed/corto')).status()).toBe(404);
+    const home = await request.get('/');
+    expect(home.headers()['x-frame-options']).toBe('DENY');
+    expect(home.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+  });
+});
+
+test.describe('privacidad y cookies', () => {
+  test('la primera visita pregunta por la analítica y recuerda la decisión', async ({ page }) => {
+    await page.goto('/');
+    const banner = page.getByRole('dialog', { name: 'Preferencias de cookies' });
+    await expect(banner).toBeVisible();
+    await banner.getByRole('button', { name: 'Rechazar' }).click();
+    await expect(banner).toBeHidden();
+
+    await page.reload();
+    await expect(page.getByRole('dialog', { name: 'Preferencias de cookies' })).toBeHidden();
+    expect(await page.evaluate(() => localStorage.getItem('sntx-consent'))).toBe('denied');
+  });
+
+  test('«Preferencias de cookies» en el pie permite cambiar la decisión', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('sntx-consent', 'denied'));
+    await page.goto('/');
+    await expect(page.getByRole('dialog', { name: 'Preferencias de cookies' })).toBeHidden();
+    await page.getByRole('button', { name: 'Preferencias de cookies' }).click();
+    await expect(page.getByRole('dialog', { name: 'Preferencias de cookies' })).toBeVisible();
+  });
+
+  test('existe la página de privacidad y se llega desde el pie', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('sntx-consent', 'denied'));
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Privacidad' }).click();
+    await expect(page).toHaveURL(/\/privacidad$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Privacidad y cookies' })).toBeVisible();
+    await expect(page.getByText('Firebase Analytics (Google)').first()).toBeVisible();
+  });
+});
+
 test.describe('navegador', () => {
   test('la home pinta el catálogo sin violaciones de CSP ni errores de página', async ({ page }) => {
     const csp = [];

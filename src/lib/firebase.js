@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAnalytics, isSupported, setAnalyticsCollectionEnabled } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -26,14 +26,26 @@ if (isFirebaseConfigured) {
   db = getFirestore(app);
   auth = getAuth(app);
 
-  // Analytics is only supported in browser environments
-  if (typeof window !== "undefined") {
-    isSupported().then((supported) => {
-      if (supported) {
-        analytics = getAnalytics(app);
-      }
-    });
+}
+
+/**
+ * Activa Firebase Analytics. Solo se llama tras el consentimiento de la persona (ver
+ * `src/lib/consent.js`): `getAnalytics` descarga gtag.js de Google y crea identificadores
+ * persistentes, así que NO se inicializa al cargar la página.
+ */
+export async function startAnalytics() {
+  if (!app || typeof window === "undefined") return null;
+  if (!analytics) {
+    if (!(await isSupported())) return null;
+    analytics = getAnalytics(app);
   }
+  setAnalyticsCollectionEnabled(analytics, true);
+  return analytics;
+}
+
+/** Si se retira el consentimiento, deja de enviar datos sin recargar. */
+export function stopAnalytics() {
+  if (analytics) setAnalyticsCollectionEnabled(analytics, false);
 }
 
 export { db, auth, analytics, isFirebaseConfigured };

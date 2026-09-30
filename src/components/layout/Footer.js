@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { Coffee } from 'lucide-react';
+import { openConsentPreferences } from '@/lib/consent';
 import DonateModal from '@/features/donations/components/DonateModal';
 
 export default function Footer() {
@@ -23,6 +25,17 @@ export default function Footer() {
             ¿Te gusta streaming-Sntx? Apóyanos con un café.
           </button>
         )}
+      </div>
+      <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+        <p>Este producto usa la API de TMDB pero no está respaldado ni certificado por TMDB.</p>
+        <nav aria-label="Legal" className="flex gap-4">
+          <Link href="/privacidad" className="hover:text-gray-300 transition-colors">
+            Privacidad
+          </Link>
+          <button type="button" onClick={openConsentPreferences} className="hover:text-gray-300 transition-colors">
+            Preferencias de cookies
+          </button>
+        </nav>
       </div>
       <DonateModal
         isOpen={donateModalOpen}

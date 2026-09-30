@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import FirebaseAnalytics from "@/components/layout/FirebaseAnalytics";
 import Footer from "@/components/layout/Footer";
+import ConsentBanner from "@/components/layout/ConsentBanner";
 
 // Fuentes alojadas en src/app/fonts (ver LICENSES.txt): el build no depende de Google Fonts.
 const fontDisplay = localFont({
@@ -99,6 +100,7 @@ export default function RootLayout({ children }) {
           {children}
           <Footer />
         </div>
+        <ConsentBanner />
         <Analytics />
         <SpeedInsights />
       </body>
