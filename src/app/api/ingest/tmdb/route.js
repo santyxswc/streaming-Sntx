@@ -84,6 +84,10 @@ export async function POST(request) {
       );
     }
 
+    // Constante derivada, no el valor del cuerpo: lo que llega a logs, SQL y TMDB es siempre
+    // uno de estos dos literales (CodeQL no reconoce la comparación de arriba como saneamiento).
+    const mediaType = type === 'movie' ? 'movie' : 'series';
+
     // El cuerpo es entrada externa: `page` y `maxPages` deben ser enteros positivos. Además de
     // evitar NaN en el bucle, impide que texto arbitrario llegue a los logs.
     const isPositiveInt = (n) => Number.isInteger(n) && n >= 1;
@@ -103,7 +107,7 @@ export async function POST(request) {
     const fullRun = all === true || fullCatalog === true;
     const maxPagesPerRequest = Math.min(maxPagesBody ?? DEFAULT_MAX_PAGES_PER_REQUEST, 500);
 
-    const existingTitles = await loadExistingTitles(type);
+    const existingTitles = await loadExistingTitles(mediaType);
 
     let currentPage = targetPage;
     let totalPages = 1;
@@ -114,7 +118,7 @@ export async function POST(request) {
     const sampleItems = [];
 
     while (pagesDone < maxPagesPerRequest) {
-      const result = await discoverTmdbPage(type, {
+      const result = await discoverTmdbPage(mediaType, {
         sortBy: sortBy || 'popularity.desc',
         page: currentPage,
         year,
@@ -125,7 +129,7 @@ export async function POST(request) {
       totalPages = result.totalPages || 1;
 
       if (!result.items.length) {
-        console.log('[ingest-tmdb] Sin items en página %d (%s)', currentPage, type);
+        console.log('[ingest-tmdb] Sin items en página %d (%s)', currentPage, mediaType);
         break;
       }
       totalRaw += result.items.length;
@@ -145,13 +149,13 @@ export async function POST(request) {
 
       console.log(
         '[ingest-tmdb] %s página %d/%d: %d items (%d nuevos, %d ya existían)',
-        type, currentPage, totalPages, result.items.length, newItems.length, duplicatesThisPage
+        mediaType, currentPage, totalPages, result.items.length, newItems.length, duplicatesThisPage
       );
 
       if (newItems.length) {
         await Promise.all([
           saveMediaBatch(newItems),
-          updateFilterMetadata(type, newItems),
+          updateFilterMetadata(mediaType, newItems),
         ]);
         totalScraped += newItems.length;
 
