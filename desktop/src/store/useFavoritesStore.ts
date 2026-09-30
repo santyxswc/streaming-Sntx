@@ -34,6 +34,19 @@ interface FavoritesState {
   setFavorites: (favorites: MediaItem[]) => void;
 }
 
+/**
+ * Selector de "¿es favorito?" que SÍ suscribe al componente a los cambios: seleccionar la función
+ * `isFavorite` (`(s) => s.isFavorite`) devuelve siempre la misma referencia, así que el componente
+ * no se repinta al añadir o quitar y el icono queda desfasado hasta que otra cosa lo repinta.
+ */
+export const selectIsFavorite =
+  (id: string | undefined | null) =>
+  (s: Pick<FavoritesState, "favorites" | "favoriteIds">): boolean => {
+    if (!id) return false;
+    if (s.favoriteIds && typeof s.favoriteIds === "object") return Boolean(s.favoriteIds[id]);
+    return s.favorites.some((f) => f.id === id);
+  };
+
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({

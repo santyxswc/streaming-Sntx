@@ -4,11 +4,12 @@ import { mediaTypeFromPath } from "@/lib/mediaRoute";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Play, Star, X, Plus, Check, Volume2, VolumeX, ChevronDown, ChevronUp, Maximize2, Minimize2 } from "lucide-react";
-import { useFavoritesStore } from "@/store/useFavoritesStore";
+import { useFavoritesStore, selectIsFavorite } from "@/store/useFavoritesStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import MovieRow from "@/components/MovieRow";
 import PageLoader from "@/components/PageLoader";
 import { fetchDetail, fetchTrailers, fetchEpisodes, fetchRecommendations, type Trailer } from "@/api/client";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 
 interface DetailItem {
   id: string;
@@ -32,20 +33,14 @@ interface Episode {
 
 const LANGUAGE_LABEL: Record<string, string> = { es: "Español", en: "Inglés" };
 
-function youtubeEmbedUrl(id: string, params: Record<string, string | number> = {}) {
-  const query = new URLSearchParams({ rel: "0", modestbranding: "1" });
-  Object.entries(params).forEach(([k, v]) => query.set(k, String(v)));
-  return `https://www.youtube-nocookie.com/embed/${id}?${query}`;
-}
-
 export default function DetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const mediaType = mediaTypeFromPath(useLocation().pathname);
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-  const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const user = useAuthStore((s) => s.user);
 
   const [item, setItem] = useState<DetailItem | null>(null);
+  const favorite = useFavoritesStore(selectIsFavorite(item?.id));
   const [loading, setLoading] = useState(true);
   const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [trailersLoading, setTrailersLoading] = useState(false);
@@ -221,13 +216,13 @@ export default function DetailPage() {
                       onClick={() => toggleFavorite(item, user?.uid)}
                       className={cn(
                         "flex items-center gap-3 px-6 md:px-10 py-3.5 md:py-4 rounded-md font-black uppercase tracking-tighter transition-premium border-[2px] backdrop-blur-md text-lg md:text-xl",
-                        isFavorite(item.id)
+                        favorite
                           ? "bg-[var(--primary)] border-[var(--primary)] text-white"
                           : "bg-gray-600/30 border-white/20 text-white hover:bg-gray-600/50 hover:scale-105"
                       )}
                     >
-                      {isFavorite(item.id) ? <Check size={24} /> : <Plus size={24} />}
-                      {isFavorite(item.id) ? "En mi lista" : "Mi Lista"}
+                      {favorite ? <Check size={24} /> : <Plus size={24} />}
+                      {favorite ? "En mi lista" : "Mi Lista"}
                     </button>
                   </div>
                 </motion.div>

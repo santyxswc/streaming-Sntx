@@ -2,7 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { Play, Plus, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useFavoritesStore } from "@/store/useFavoritesStore";
+import { useFavoritesStore, selectIsFavorite } from "@/store/useFavoritesStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { MediaItem } from "@/store/useFavoritesStore";
 
@@ -17,7 +17,7 @@ interface ItemPreviewProps {
 
 function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMouseLeave }: ItemPreviewProps) {
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-  const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const favorite = useFavoritesStore(selectIsFavorite(item?.id));
   const user = useAuthStore((s) => s.user);
 
   if (!isVisible || !item) return null;
@@ -57,7 +57,7 @@ function ItemPreview({ item, isVisible, x, y, onMouseEnter, onMouseLeave }: Item
             onClick={() => toggleFavorite(item, user?.uid)}
             className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center hover:border-white transition-premium"
           >
-            {isFavorite(item.id) ? <Check size={20} /> : <Plus size={20} />}
+            {favorite ? <Check size={20} /> : <Plus size={20} />}
           </button>
           <div className="flex-1" />
           <Link to={detailPath}>

@@ -3,6 +3,7 @@ import { Play, Info, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem } from "@/store/useFavoritesStore";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 
 interface BannerProps {
   movie: MediaItem | null;
@@ -43,7 +44,7 @@ function Banner({ movie }: BannerProps) {
             >
               <div className="relative w-full h-full flex items-center justify-center">
                 <iframe
-                  src={`https://www.youtube.com/embed/${trailerId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&loop=1&playlist=${trailerId}&auto_play=1&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1`}
+                  src={youtubeEmbedUrl(trailerId, { autoplay: 1, mute: isMuted ? 1 : 0, controls: 0, loop: 1, playlist: trailerId })}
                   className="absolute w-[177.77vh] h-full min-w-full min-h-[56.25vw] pointer-events-none brightness-[0.7] transform scale-110"
                   allow="autoplay; encrypted-media"
                   title="Trailer"
