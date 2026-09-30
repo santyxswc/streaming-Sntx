@@ -26,7 +26,7 @@ async function requireUid(req) {
  * GET — nombre de chat actual (crea perfil con nombre aleatorio si no existe).
  */
 export async function GET(req) {
-  const ipLimited = rateLimit(req, {
+  const ipLimited = await rateLimit(req, {
     limit: 40,
     windowMs: 60_000,
     id: 'chat-profile-get-ip',
@@ -42,7 +42,7 @@ export async function GET(req) {
     );
   }
 
-  const uidLimited = rateLimitKey(`chat:profile:get:${uid}`, {
+  const uidLimited = await rateLimitKey(`chat:profile:get:${uid}`, {
     limit: 90,
     windowMs: 60_000,
   });
@@ -64,7 +64,7 @@ export async function GET(req) {
  * PATCH — cambiar nombre visible en el chat.
  */
 export async function PATCH(req) {
-  const ipLimited = rateLimit(req, {
+  const ipLimited = await rateLimit(req, {
     limit: 15,
     windowMs: 60_000,
     id: 'chat-profile-patch-ip',
@@ -80,7 +80,7 @@ export async function PATCH(req) {
     );
   }
 
-  const uidLimited = rateLimitKey(`chat:profile:patch:${uid}`, {
+  const uidLimited = await rateLimitKey(`chat:profile:patch:${uid}`, {
     limit: 8,
     windowMs: 60 * 60 * 1000,
     message:

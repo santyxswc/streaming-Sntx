@@ -58,7 +58,7 @@ export async function POST(request) {
     if (!safeEqual(apiKey, secretKey)) {
       // Solo se cuentan los intentos fallidos: la ingesta legítima hace muchas
       // peticiones seguidas y no debe bloquearse, pero adivinar la clave sí.
-      const limited = rateLimit(request, {
+      const limited = await rateLimit(request, {
         limit: 10,
         windowMs: 5 * 60_000,
         id: 'ingest-auth-fail',

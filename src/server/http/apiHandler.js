@@ -46,7 +46,7 @@ export function errorResponse(error, context = 'api') {
  */
 export function withApiHandler(handler, { id, limit = 30, windowMs = 60000, cache = CachePolicy.hour }) {
   return async (request, ctx = {}) => {
-    const limited = rateLimit(request, { id, limit, windowMs });
+    const limited = await rateLimit(request, { id, limit, windowMs });
     if (limited) return limited;
 
     try {

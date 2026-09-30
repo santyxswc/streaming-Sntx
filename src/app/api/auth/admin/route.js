@@ -7,7 +7,7 @@ import { verifyBearerUid } from '@/server/db/firebaseAdmin';
  * Sin token o no listado → admin: false.
  */
 export async function GET(req) {
-  const limited = rateLimit(req, {
+  const limited = await rateLimit(req, {
     limit: 60,
     windowMs: 60_000,
     id: 'auth-admin-check',

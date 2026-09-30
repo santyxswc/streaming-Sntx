@@ -36,7 +36,7 @@ function isUuid(s) {
  * Lectura pública (sin token); limitada por rate limit.
  */
 export async function GET(req) {
-  const limited = rateLimit(req, {
+  const limited = await rateLimit(req, {
     limit: 45,
     windowMs: 60_000,
     id: 'chat-messages-get',
@@ -99,7 +99,7 @@ export async function GET(req) {
  * POST — enviar mensaje (requiere Firebase ID token).
  */
 export async function POST(req) {
-  const ipLimited = rateLimit(req, {
+  const ipLimited = await rateLimit(req, {
     limit: 45,
     windowMs: 60_000,
     id: 'chat-messages-post-ip',
@@ -124,7 +124,7 @@ export async function POST(req) {
     );
   }
 
-  const uidLimited = rateLimitKey(`chat:messages:post:${uid}`, {
+  const uidLimited = await rateLimitKey(`chat:messages:post:${uid}`, {
     limit: 55,
     windowMs: 60_000,
     message: 'Estás enviando mensajes demasiado rápido. Espera un momento.',

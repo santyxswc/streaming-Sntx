@@ -8,7 +8,7 @@ import { isChatNameAvailable } from '@/server/chat/chatRepository';
  * Requiere sesión; límites estrictos anti-abuso / enumeración.
  */
 export async function GET(req) {
-  const ipLimited = rateLimit(req, {
+  const ipLimited = await rateLimit(req, {
     limit: 45,
     windowMs: 60_000,
     id: 'chat-profile-avail-ip',
@@ -33,7 +33,7 @@ export async function GET(req) {
     );
   }
 
-  const uidLimited = rateLimitKey(`chat:avail:${uid}`, {
+  const uidLimited = await rateLimitKey(`chat:avail:${uid}`, {
     limit: 50,
     windowMs: 60_000,
   });

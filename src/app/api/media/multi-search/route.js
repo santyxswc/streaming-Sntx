@@ -22,7 +22,7 @@ const CACHE_HEADERS = {
  * Retorna resultados unificados con indicador de fuente.
  */
 export async function GET(request) {
-  const limitResponse = rateLimit(request, {
+  const limitResponse = await rateLimit(request, {
     limit: 15,
     windowMs: 60000,
     id: "multi-search",

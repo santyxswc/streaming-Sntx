@@ -18,7 +18,7 @@ function isUuid(s) {
  * Query: limit (1–100), beforeId (página hacia atrás), afterId (solo mensajes nuevos; tiempo real), mediaId (filtro sala).
  */
 export async function GET(req) {
-  const limited = rateLimit(req, {
+  const limited = await rateLimit(req, {
     limit: 120,
     windowMs: 60_000,
     id: 'chat-moderation-get',
