@@ -1,0 +1,60 @@
+name: DAST (ZAP baseline)
+
+# Análisis dinámico pasivo con OWASP ZAP contra el build de producción en modo demo
+# (sin base de datos ni claves). Solo informa: no bloquea ningún cambio.
+# Se ejecuta cada semana y a mano (Actions -> DAST -> Run workflow).
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dast
+  cancel-in-progress: true
+
+jobs:
+  zap:
+    name: ZAP baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PORT: "3100"
+      CATALOG_PROVIDER: demo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Arrancar la app
+        run: |
+          nohup npm run start -- -p "$PORT" > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fs "http://localhost:$PORT/api/health" >/dev/null && exit 0
+            sleep 2
+          done
+          echo "La app no arrancó:"; cat server.log; exit 1
+      - name: ZAP baseline
+        run: |
+          ZAP=$(awk '/AS zap/{print $2}' .github/tools/Dockerfile)
+          mkdir zap && chmod 777 zap
+          # -I: no falla por advertencias; el informe es lo que importa.
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" "$ZAP" \
+            zap-baseline.py -t "http://localhost:$PORT" -r zap-report.html -J zap-report.json -I
+      - name: Resumen
+        if: always()
+        run: |
+          if [ -f zap/zap-report.json ]; then node scripts/zap-summary.mjs zap/zap-report.json >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Subir informe
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zap-report
+          path: zap/
+          retention-days: 30
