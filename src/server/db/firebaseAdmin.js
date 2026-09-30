@@ -125,9 +125,13 @@ export function getAdminFirestore() {
 
 /**
  * @param {string | null} authHeader - Valor de cabecera Authorization
+ * @param {{ checkRevoked?: boolean }} [options] - `checkRevoked` consulta a Firebase si la
+ *   sesión fue revocada o el usuario deshabilitado (una llamada de red extra). Sin ella,
+ *   un token sigue siendo válido hasta que caduca (~1 h). Úsala en rutas de escritura
+ *   y de administración.
  * @returns {Promise<string|null>} uid o null si no hay Bearer
  */
-export async function verifyBearerUid(authHeader) {
+export async function verifyBearerUid(authHeader, { checkRevoked = false } = {}) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
@@ -143,16 +147,18 @@ export async function verifyBearerUid(authHeader) {
   }
 
   try {
-    const decoded = await admin.auth(app).verifyIdToken(token);
+    const decoded = await admin.auth(app).verifyIdToken(token, checkRevoked);
     return decoded.uid;
   } catch (e) {
     const code = e?.code || e?.errorInfo?.code || '';
     const err = new Error(
       code === 'auth/id-token-expired'
         ? 'TOKEN_EXPIRED'
-        : code === 'auth/argument-error'
-          ? 'TOKEN_MALFORMED'
-          : `VERIFY_FAILED:${code || e.message}`
+        : code === 'auth/id-token-revoked' || code === 'auth/user-disabled'
+          ? 'TOKEN_REVOKED'
+          : code === 'auth/argument-error'
+            ? 'TOKEN_MALFORMED'
+            : `VERIFY_FAILED:${code || e.message}`
     );
     err.isTokenError = true;
     throw err;
@@ -182,6 +188,9 @@ export function formatVerifyAuthError(err) {
   }
   if (msg === 'TOKEN_EXPIRED') {
     return 'Sesión expirada. Vuelve a iniciar sesión.';
+  }
+  if (msg === 'TOKEN_REVOKED') {
+    return 'Tu sesión ya no es válida. Vuelve a iniciar sesión.';
   }
   if (msg === 'TOKEN_MALFORMED') {
     return 'Token de sesión inválido. Cierra sesión y entra de nuevo.';

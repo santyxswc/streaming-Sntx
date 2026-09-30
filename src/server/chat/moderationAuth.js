@@ -34,7 +34,7 @@ export async function isChatModeratorAuthorized(req) {
 
   let uid;
   try {
-    uid = await verifyBearerUid(authHeader);
+    uid = await verifyBearerUid(authHeader, { checkRevoked: true });
   } catch {
     return { ok: false, reason: 'invalid_token' };
   }

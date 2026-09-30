@@ -28,7 +28,7 @@ export async function GET(req) {
 
   let uid;
   try {
-    uid = await verifyBearerUid(req.headers.get('authorization'));
+    uid = await verifyBearerUid(req.headers.get('authorization'), { checkRevoked: true });
   } catch {
     return NextResponse.json({
       success: true,

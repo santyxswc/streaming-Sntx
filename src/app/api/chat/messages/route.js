@@ -108,7 +108,7 @@ export async function POST(req) {
 
   let uid;
   try {
-    uid = await verifyBearerUid(req.headers.get('authorization'));
+    uid = await verifyBearerUid(req.headers.get('authorization'), { checkRevoked: true });
   } catch (e) {
     console.error('verifyBearerUid', e);
     return NextResponse.json(
