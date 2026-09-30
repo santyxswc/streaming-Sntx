@@ -40,3 +40,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  # Versiones de Hadolint y Trivy que usa el CI (ver .github/tools/Dockerfile).
+  - package-ecosystem: docker
+    directory: /.github/tools
+    schedule:
+      interval: weekly

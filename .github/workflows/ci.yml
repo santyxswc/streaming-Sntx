@@ -69,3 +69,91 @@ jobs:
       # Versión fijada para que un cambio de la CLI no rompa el CI sin aviso.
       - run: npm install --global firebase-tools@15.30.1
       - run: npm run test:rules
+
+  docker:
+    name: Imagen Docker (Hadolint, prueba de arranque y Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write # subir los resultados de Trivy a la pestaña Security
+    env:
+      IMAGE: streaming-sntx:ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Resolver las imágenes de las herramientas
+        run: |
+          echo "HADOLINT_IMAGE=$(awk '/AS hadolint/{print $2}' .github/tools/Dockerfile)" >> "$GITHUB_ENV"
+          echo "TRIVY_IMAGE=$(awk '/AS trivy/{print $2}' .github/tools/Dockerfile)" >> "$GITHUB_ENV"
+
+      # Solo bloquea con errores de Dockerfile; los avisos se muestran pero no detienen el CI.
+      - name: Hadolint
+        run: docker run --rm -i "$HADOLINT_IMAGE" hadolint --failure-threshold error - < Dockerfile
+
+      - name: Construir la imagen
+        run: docker build --tag "$IMAGE" .
+
+      # Comprueba que la imagen arranca de verdad, con las mismas restricciones que docker-compose.yml.
+      - name: Prueba de arranque
+        run: |
+          docker run -d --name web -p 3000:3000 --init --read-only \
+            --tmpfs /tmp --tmpfs /app/.next/cache:uid=1000,gid=1000 \
+            --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE"
+          for i in $(seq 1 30); do
+            health=$(docker inspect --format '{{.State.Health.Status}}' web)
+            [ "$health" = "healthy" ] && break
+            sleep 2
+          done
+          echo "Estado del contenedor: $health"
+          if [ "$health" != "healthy" ]; then docker logs web; exit 1; fi
+          curl -fsS http://localhost:3000/api/health
+          uid=$(docker exec web id -u)
+          echo "uid del proceso: $uid"
+          [ "$uid" != "0" ]
+          docker rm -f web
+
+      - name: Exportar la imagen para escanearla
+        run: docker save "$IMAGE" -o "$RUNNER_TEMP/image.tar"
+
+      # Informe: siempre se muestra y se sube a Security, pero NUNCA bloquea.
+      - name: Trivy (informe de vulnerabilidades altas y críticas)
+        continue-on-error: true
+        run: |
+          trivy() { docker run --rm -v "$RUNNER_TEMP:/work" -v trivy-cache:/root/.cache "$TRIVY_IMAGE" "$@"; }
+          trivy image --input /work/image.tar --scanners vuln --severity HIGH,CRITICAL \
+            --ignore-unfixed --format table --quiet
+          trivy image --input /work/image.tar --scanners vuln --severity HIGH,CRITICAL \
+            --ignore-unfixed --format sarif --output /work/trivy.sarif --quiet
+          {
+            echo "### Trivy: vulnerabilidades HIGH y CRITICAL con corrección disponible"
+            echo '```'
+            trivy image --input /work/image.tar --scanners vuln --severity HIGH,CRITICAL \
+              --ignore-unfixed --format table --quiet | tail -n 60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir resultados a la pestaña Security
+        continue-on-error: true # en forks el token no puede escribir en Security
+        uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3
+        with:
+          sarif_file: ${{ runner.temp }}/trivy.sarif
+          category: trivy-image
+
+      # Puerta: solo CRITICAL con corrección disponible. Trivy devuelve 10 cuando la puerta
+      # salta; cualquier otro código distinto de 0 es un fallo del escáner (p. ej. no pudo
+      # descargar su base de datos) y solo avisa: un problema de infraestructura no debe
+      # bloquear el despliegue.
+      - name: Trivy (puerta para CRITICAL con corrección disponible)
+        run: |
+          set +e
+          docker run --rm -v "$RUNNER_TEMP:/work" -v trivy-cache:/root/.cache "$TRIVY_IMAGE" \
+            image --input /work/image.tar --scanners vuln --severity CRITICAL \
+            --ignore-unfixed --exit-code 10 --quiet
+          rc=$?
+          if [ "$rc" -eq 10 ]; then
+            echo "::error::La imagen tiene vulnerabilidades CRITICAL con corrección disponible."
+            exit 1
+          elif [ "$rc" -ne 0 ]; then
+            echo "::warning::Trivy no pudo completar el escaneo (código $rc). No se bloquea el CI."
+          fi
