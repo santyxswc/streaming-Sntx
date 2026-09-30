@@ -11,9 +11,9 @@
 |---|---|
 | Alta | 0 |
 | Media | 1 |
-| Baja | 3 |
+| Baja | 2 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) y avisos pendientes de `firebase-admin` (SEC-10).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10) y espacio de usuario sin límites en Firestore (SEC-14).
 
 ## Corregido
 
@@ -30,6 +30,7 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-12 | `typescript.ignoreBuildErrors: true` ocultaba errores de tipos en el build | Eliminado. La web no contiene ficheros TypeScript, así que no cambia el resultado, pero un futuro `.ts` ya no fallará en silencio. |
 | SEC-13 | `images.remotePatterns` con `hostname: '**'` | Sustituido por una lista cerrada en `src/config/imageHosts.mjs` (`image.tmdb.org`, `static.tvmaze.com`, `cdn.cafecito.app`) con tests. Hoy las imágenes van `unoptimized`, por lo que el comodín no estaba activo, pero habría abierto un proxy de imágenes si se activaba el optimizador. La CSP mantiene `img-src https:` porque el catálogo antiguo puede contener otros dominios. |
 | SEC-10 | 7 avisos moderados de dependencias que colgaban de `firebase-admin` 13 | Migrado a `firebase-admin` 14.5.0 y `npm audit fix` para el `uuid` transitivo: **0 vulnerabilidades** en producción. La v14 elimina el espacio de nombres antiguo (`admin.auth()`, `admin.firestore()`, `admin.apps`…), lo que habría roto el chat, la moderación y el catálogo de Firestore en cada petición: el CI no lo detectaba porque nunca ejecuta esa parte y los tests simulaban la API antigua. Se migró a las importaciones modulares (`firebase-admin/app`, `/auth`, `/firestore`), se normaliza el código de error de Auth (con o sin prefijo `auth/`) y se añadió `firebaseAdminSdk.test.js`, que ejecuta el SDK real sin mocks; se comprobó que falla 4 de 4 con el código antiguo. Requiere Node ≥ 22. |
+| SEC-14 | `users/{userId}/**` permitía a cada usuario crear cualquier documento o subcolección, con cualquier contenido y tamaño | Las reglas aceptan solo `users/{uid}/userData/watchlist` (lo único que escriben web y escritorio), con `items` como lista de hasta 500 elementos y sin otros campos al crear. En actualizaciones se valida qué campos cambian, no cuáles existen, para no romper documentos antiguos. 19 tests con el emulador (`npm run test:rules`, también en el CI): con las reglas antiguas fallan 9. **Pendiente de despliegue:** las reglas del repositorio no se publican solas (`firebase deploy --only firestore:rules` o pegarlas en la consola). |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
@@ -44,8 +45,6 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 ### Baja
 
 **SEC-11 — Sin CSP estricta con nonces.** `script-src` mantiene `'unsafe-inline'`. Quitarlo exige nonces por petición y render dinámico. Riesgo aceptado por ahora.
-
-**SEC-14 — Reglas de Firestore sin validación de esquema ni tamaño en `users/{userId}/**`.** Cada usuario puede escribir datos arbitrarios en su propio espacio. Bajo impacto; añadir límites si crece el uso.
 
 **SEC-15 — Privacidad.** Firebase Analytics envía datos de uso a Google. Falta aviso de privacidad/cookies si el sitio se abre a público real.
 
@@ -65,4 +64,4 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
 4. ~~SEC-10~~ (hecho).
-5. ~~SEC-12 y SEC-13~~ (hecho). Resto de bajas: SEC-11, SEC-14 y SEC-15.
+5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho; falta publicar las reglas). Resto de bajas: SEC-11 y SEC-15.
