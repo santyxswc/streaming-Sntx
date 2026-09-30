@@ -275,8 +275,12 @@ Tras rotar un secreto en producción, actualiza también tu `.env` local si lo u
 
 **Estado actual:** hay un script de copia manual, pero ninguna copia automática. Acciones recomendadas:
 
-1. Comprueba en Neon la **ventana de restauración a un punto en el tiempo** que incluye tu plan y cómo
-   se usa (ramas de restauración).
+1. **Restauración en Neon (comprobada el 2026-09-30):** la rama `production` permite volver a cualquier punto de las
+   **últimas 6 horas** (Backup & Restore → *Restore from history*). Sirve para deshacer un error reciente; **no es una
+   copia de seguridad**: lo de hace más de 6 horas no se puede recuperar. Los *snapshots* programados son de pago; los
+   manuales (botón **Create**) están disponibles: crea uno antes de cualquier cambio arriesgado y, una vez, del
+   catálogo completo (volver a ingerirlo con los scripts lleva horas). **Cuidado con «Restore»:** devuelve toda la rama a
+   otra fecha y descarta lo posterior; «Preview data» es inofensivo.
 2. Copia manual periódica de lo no reproducible con `scripts/backup-chat.sh`:
    ```bash
    scripts/backup-chat.sh        # genera backups/chat-AAAAMMDD-HHMM.sql.gz

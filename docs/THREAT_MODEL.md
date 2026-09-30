@@ -201,7 +201,7 @@ informe de auditoría.
 | `/api/ai/search` sin autenticación | Aceptado mientras la clave no esté en producción | Exigir sesión reduciría el abuso si se activa |
 | Fallo abierto del rate limit si Redis cae | Aceptado | Se prioriza la disponibilidad; queda un aviso en logs y el límite en memoria por instancia |
 | Sin API de borrado ni bloqueo en moderación | Aceptado | Se resuelve a mano; ver RUNBOOK |
-| Copias de seguridad de chat y perfiles | Manual (`scripts/backup-chat.sh`) | No hay copia automática. Al 2026-09-30 hay 2 mensajes y 2 perfiles, así que el impacto es bajo hoy; crece con el uso. Falta confirmar la ventana de restauración de Neon |
+| Copias de seguridad de chat y perfiles | Manual (`scripts/backup-chat.sh`) | No hay copia automática. Al 2026-09-30 hay 2 mensajes y 2 perfiles, así que el impacto es bajo hoy; crece con el uso. La restauración de Neon cubre solo las últimas 6 horas y no hay snapshots programados (son de pago): no sustituye a una copia |
 | Push directo a `main` sin PR ni CI en verde | Aceptado | Con un único mantenedor, exigir PR añade fricción; el ruleset ya evita reescribir o borrar el historial (SEC-17) |
 
 ## 8. Supuestos y fuera de alcance
