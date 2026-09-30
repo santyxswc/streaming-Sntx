@@ -1,5 +1,7 @@
 import 'server-only';
-import admin from 'firebase-admin';
+import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Parsea el JSON del service account desde env.
@@ -64,8 +66,8 @@ function parseServiceAccountFromEnv() {
  * @see docs/FIREBASE_SERVICE_ACCOUNT.md
  */
 export function getFirebaseAdminApp() {
-  if (admin.apps.length > 0) {
-    return admin.app();
+  if (getApps().length > 0) {
+    return getApp();
   }
 
   let cred;
@@ -105,8 +107,8 @@ export function getFirebaseAdminApp() {
   }
 
   try {
-    return admin.initializeApp({
-      credential: admin.credential.cert(cred),
+    return initializeApp({
+      credential: cert(cred),
     });
   } catch (e) {
     throw new Error(
@@ -119,8 +121,17 @@ export function getFirebaseAdminApp() {
  * Firestore Admin (bypasea reglas de seguridad). Usar solo en API routes.
  */
 export function getAdminFirestore() {
-  const app = getFirebaseAdminApp();
-  return admin.firestore(app);
+  return getFirestore(getFirebaseAdminApp());
+}
+
+/**
+ * Código de error de Firebase Auth sin el prefijo `auth/`. El SDK ha expuesto el código en
+ * distintos sitios (`code`, `errorInfo.code`) y con o sin prefijo según la versión, y de
+ * este valor depende decidir si una sesión es válida, caducada o revocada.
+ */
+export function authErrorCode(error) {
+  const raw = error?.code || error?.errorInfo?.code || '';
+  return String(raw).replace(/^auth\//, '');
 }
 
 /**
@@ -147,16 +158,16 @@ export async function verifyBearerUid(authHeader, { checkRevoked = false } = {})
   }
 
   try {
-    const decoded = await admin.auth(app).verifyIdToken(token, checkRevoked);
+    const decoded = await getAuth(app).verifyIdToken(token, checkRevoked);
     return decoded.uid;
   } catch (e) {
-    const code = e?.code || e?.errorInfo?.code || '';
+    const code = authErrorCode(e);
     const err = new Error(
-      code === 'auth/id-token-expired'
+      code === 'id-token-expired'
         ? 'TOKEN_EXPIRED'
-        : code === 'auth/id-token-revoked' || code === 'auth/user-disabled'
+        : code === 'id-token-revoked' || code === 'user-disabled'
           ? 'TOKEN_REVOKED'
-          : code === 'auth/argument-error'
+          : code === 'argument-error'
             ? 'TOKEN_MALFORMED'
             : `VERIFY_FAILED:${code || e.message}`
     );

@@ -10,7 +10,8 @@
  * Opción 2: Variable FIREBASE_SERVICE_ACCOUNT_JSON con el JSON como string (en .env.local)
  *   FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"...","private_key":"..."}
  */
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert, applicationDefault } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
@@ -70,15 +71,15 @@ async function migrateCollection(db, collectionName) {
 }
 
 function initFirebaseAdmin() {
-  if (admin.apps.length > 0) return admin.firestore();
+  if (getApps().length > 0) return getFirestore();
 
   const credJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
   if (credJson) {
     try {
       const serviceAccount = typeof credJson === 'string' ? JSON.parse(credJson) : credJson;
-      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-      return admin.firestore();
+      initializeApp({ credential: cert(serviceAccount) });
+      return getFirestore();
     } catch (e) {
       console.error('FIREBASE_SERVICE_ACCOUNT_JSON no es JSON válido:', e.message);
       process.exit(1);
@@ -86,8 +87,8 @@ function initFirebaseAdmin() {
   }
 
   try {
-    admin.initializeApp({ credential: admin.credential.applicationDefault() });
-    return admin.firestore();
+    initializeApp({ credential: applicationDefault() });
+    return getFirestore();
   } catch (e) {
     console.error(
       'Para migrar necesitas la cuenta de servicio de Firebase (Admin SDK).\n\n' +
