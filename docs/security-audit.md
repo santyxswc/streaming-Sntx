@@ -10,10 +10,10 @@
 | Severidad | Cantidad |
 |---|---|
 | Alta | 0 |
-| Media | 2 |
+| Media | 1 |
 | Baja | 3 |
 
-Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12) y proxy de imágenes abierto latente (SEC-13).
+Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) y avisos pendientes de `firebase-admin` (SEC-10).
 
 ## Corregido
 
@@ -29,6 +29,7 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-08 | `/api/health/db` público, sin límite y con una consulta real a Neon en cada petición | Rate limit de 30/min por IP y caché de 30 s (5 s si falla) con el `createTtlCache` existente, más `Cache-Control: no-store`. Se mantiene el campo `catalog` porque el README lo documenta. |
 | SEC-12 | `typescript.ignoreBuildErrors: true` ocultaba errores de tipos en el build | Eliminado. La web no contiene ficheros TypeScript, así que no cambia el resultado, pero un futuro `.ts` ya no fallará en silencio. |
 | SEC-13 | `images.remotePatterns` con `hostname: '**'` | Sustituido por una lista cerrada en `src/config/imageHosts.mjs` (`image.tmdb.org`, `static.tvmaze.com`, `cdn.cafecito.app`) con tests. Hoy las imágenes van `unoptimized`, por lo que el comodín no estaba activo, pero habría abierto un proxy de imágenes si se activaba el optimizador. La CSP mantiene `img-src https:` porque el catálogo antiguo puede contener otros dominios. |
+| SEC-10 | 7 avisos moderados de dependencias que colgaban de `firebase-admin` 13 | Migrado a `firebase-admin` 14.5.0 y `npm audit fix` para el `uuid` transitivo: **0 vulnerabilidades** en producción. La v14 elimina el espacio de nombres antiguo (`admin.auth()`, `admin.firestore()`, `admin.apps`…), lo que habría roto el chat, la moderación y el catálogo de Firestore en cada petición: el CI no lo detectaba porque nunca ejecuta esa parte y los tests simulaban la API antigua. Se migró a las importaciones modulares (`firebase-admin/app`, `/auth`, `/firestore`), se normaliza el código de error de Auth (con o sin prefijo `auth/`) y se añadió `firebaseAdminSdk.test.js`, que ejecuta el SDK real sin mocks; se comprobó que falla 4 de 4 con el código antiguo. Requiere Node ≥ 22. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 
 ## Hallazgos abiertos
@@ -39,9 +40,6 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 `src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control; las reglas de contraseña del formulario (8 caracteres, mayúscula y número) tampoco se aplican fuera del navegador.
 *Decisión:* no usar App Check obligatorio, porque la app de escritorio usa Firebase Auth y Firestore directamente y no puede obtener tokens de reCAPTCHA desde `tauri://localhost`.
 *Mitigación acordada (pendiente de aplicar en la consola):* política de contraseñas en modo *Require*, protección contra enumeración de correos y revisión de dominios autorizados. Pasos en [FIREBASE_AUTH_HARDENING.md](FIREBASE_AUTH_HARDENING.md). El código ya muestra un mensaje claro para `auth/password-does-not-meet-requirements` y documenta que `/api/auth/limit` es de mejor esfuerzo.
-
-**SEC-10 — Dependencias con 7 avisos moderados pendientes**
-Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requiere probar `verifyIdToken` y Firestore Admin antes de fusionar.
 
 ### Baja
 
@@ -66,5 +64,5 @@ Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requi
 1. ~~SEC-05 y SEC-06~~ (hecho).
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
-4. SEC-10 (`firebase-admin` 14) con pruebas.
+4. ~~SEC-10~~ (hecho).
 5. ~~SEC-12 y SEC-13~~ (hecho). Resto de bajas: SEC-11, SEC-14 y SEC-15.
