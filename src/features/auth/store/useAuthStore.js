@@ -23,6 +23,8 @@ const mapAuthCodeToMessage = (code) => {
       return 'Este correo ya está registrado.';
     case 'auth/weak-password':
       return 'La contraseña es demasiado débil.';
+    case 'auth/password-does-not-meet-requirements':
+      return 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.';
     case 'auth/too-many-requests':
       return 'Demasiados intentos fallidos. Por favor, inténtalo más tarde.';
     default:

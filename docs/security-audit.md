@@ -36,8 +36,9 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 ### Media
 
 **SEC-09 — `/api/auth/limit` da falsa sensación de protección**
-`src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control. El límite real de fuerza bruta lo aporta Firebase, no esta ruta.
-*Recomendación:* no presentarla como control de seguridad; activar Firebase App Check y, si se necesita, Identity Platform con protección de enumeración.
+`src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control; las reglas de contraseña del formulario (8 caracteres, mayúscula y número) tampoco se aplican fuera del navegador.
+*Decisión:* no usar App Check obligatorio, porque la app de escritorio usa Firebase Auth y Firestore directamente y no puede obtener tokens de reCAPTCHA desde `tauri://localhost`.
+*Mitigación acordada (pendiente de aplicar en la consola):* política de contraseñas en modo *Require*, protección contra enumeración de correos y revisión de dominios autorizados. Pasos en [FIREBASE_AUTH_HARDENING.md](FIREBASE_AUTH_HARDENING.md). El código ya muestra un mensaje claro para `auth/password-does-not-meet-requirements` y documenta que `/api/auth/limit` es de mejor esfuerzo.
 
 **SEC-10 — Dependencias con 7 avisos moderados pendientes**
 Vienen de `firebase-admin` 13 → salto mayor a 14.5.0 (Dependabot PR #9). Requiere probar `verifyIdToken` y Firestore Admin antes de fusionar.
