@@ -1,26 +1,36 @@
-import { Sora, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import FirebaseAnalytics from "@/components/layout/FirebaseAnalytics";
 import Footer from "@/components/layout/Footer";
 
-const fontDisplay = Sora({
+// Fuentes alojadas en src/app/fonts (ver LICENSES.txt): el build no depende de Google Fonts.
+const fontDisplay = localFont({
   variable: "--font-sora",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  src: [
+    { path: "./fonts/sora-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/sora-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/sora-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
 });
 
-const fontSans = Plus_Jakarta_Sans({
+const fontSans = localFont({
   variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  src: [
+    { path: "./fonts/plus-jakarta-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/plus-jakarta-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/plus-jakarta-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/plus-jakarta-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
 });
 
-const fontMono = JetBrains_Mono({
+const fontMono = localFont({
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["400", "600"],
+  src: [
+    { path: "./fonts/jetbrains-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/jetbrains-mono-latin-600-normal.woff2", weight: "600", style: "normal" },
+  ],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://streaming-sntx.vercel.app";
