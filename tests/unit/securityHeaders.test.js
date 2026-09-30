@@ -31,6 +31,53 @@ describe('buildCsp', () => {
     expect(directive('connect-src')).toContain('https://*.google-analytics.com');
   });
 
+  describe('connect-src de Firebase', () => {
+    const connect = (options) =>
+      buildCsp({ isProd: true, ...options })
+        .split('; ')
+        .find((d) => d.startsWith('connect-src'))
+        .split(' ');
+
+    it('lista los hosts exactos de Auth, Firestore, Installations y Analytics', () => {
+      const hosts = connect();
+      for (const host of [
+        'https://firestore.googleapis.com',
+        'https://identitytoolkit.googleapis.com',
+        'https://securetoken.googleapis.com',
+        'https://firebaseinstallations.googleapis.com',
+        'https://firebase.googleapis.com',
+      ]) {
+        expect(hosts).toContain(host);
+      }
+    });
+
+    it('no admite comodines que permitan enviar datos a buckets o bases de datos ajenos', () => {
+      const hosts = connect();
+      for (const wildcard of ['https://*.googleapis.com', 'https://*.firebaseio.com', 'wss://*.firebaseio.com', 'https://*.gstatic.com']) {
+        expect(hosts).not.toContain(wildcard);
+      }
+    });
+  });
+
+  describe('frame-src de Firebase Auth', () => {
+    const frames = (options) =>
+      buildCsp({ isProd: true, ...options })
+        .split('; ')
+        .find((d) => d.startsWith('frame-src'))
+        .split(' ');
+
+    it('usa el dominio de Auth del proyecto en lugar de *.firebaseapp.com', () => {
+      const list = frames({ authDomain: 'mi-proyecto.firebaseapp.com' });
+      expect(list).toContain('https://mi-proyecto.firebaseapp.com');
+      expect(list).not.toContain('https://*.firebaseapp.com');
+    });
+
+    it('si falta la variable o no es un dominio, cae al comodín para no romper el login', () => {
+      expect(frames({ authDomain: undefined })).toContain('https://*.firebaseapp.com');
+      expect(frames({ authDomain: 'x.com; script-src *' })).toContain('https://*.firebaseapp.com');
+    });
+  });
+
   it('solo permite embeber YouTube y Firebase Auth como frames', () => {
     const frameSrc = buildCsp({ isProd: true })
       .split('; ')

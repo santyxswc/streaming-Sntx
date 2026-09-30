@@ -4,8 +4,22 @@
 // El resto de /api/* (chat, admin, ingesta, IA) no emite cabeceras CORS.
 export const PUBLIC_CORS_ROUTES = ['/api/media/:path*', '/api/media', '/api/feed/:path*', '/api/auth/limit'];
 
+// Hosts de Google/Firebase que contactan los SDK que usa la app (Auth, Firestore, Installations y
+// Analytics), sacados del código de los paquetes instalados. No se admite `*.googleapis.com`:
+// permitiría enviar datos a cualquier bucket de Cloud Storage.
+export const FIREBASE_CONNECT_HOSTS = [
+  'https://firestore.googleapis.com',
+  'https://identitytoolkit.googleapis.com',
+  'https://securetoken.googleapis.com',
+  'https://firebaseinstallations.googleapis.com',
+  'https://firebase.googleapis.com',
+];
+
 // `https` indica que el sitio se sirve bajo HTTPS real (p. ej. Vercel); en localhost es false.
-export function buildCsp({ isProd, https = false }) {
+// `authDomain` es el dominio de Firebase Auth del proyecto (NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN):
+// su iframe es el único origen `firebaseapp.com` que hay que permitir.
+export function buildCsp({ isProd, https = false, authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }) {
+  const authDomainOrigin = /^[a-z0-9.-]+$/i.test(authDomain ?? '') ? `https://${authDomain}` : 'https://*.firebaseapp.com';
   const directives = {
     'default-src': ["'self'"],
     'script-src': [
@@ -28,16 +42,13 @@ export function buildCsp({ isProd, https = false }) {
       "'self'",
       'https://www.youtube-nocookie.com',
       'https://www.youtube.com',
-      'https://*.firebaseapp.com',
+      authDomainOrigin,
       'https://apis.google.com',
       'https://accounts.google.com',
     ],
     'connect-src': [
       "'self'",
-      'https://*.googleapis.com',
-      'https://*.firebaseio.com',
-      'https://*.gstatic.com',
-      'wss://*.firebaseio.com',
+      ...FIREBASE_CONNECT_HOSTS,
       // Envío de eventos de Firebase Analytics / GA4.
       'https://www.google-analytics.com',
       'https://*.google-analytics.com',

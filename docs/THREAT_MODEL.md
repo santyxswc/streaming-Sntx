@@ -158,7 +158,7 @@ informe de auditoría.
 |---|---|---|---|---|
 | T-20 | Compromiso de `DATABASE_URL` | I, T | Solo en variables secretas de Vercel; fuera del repo (`.gitignore`, gitleaks) y de la imagen (`.dockerignore`, prueba automática); procedimiento de rotación | **Medio:** impacto alto, probabilidad baja |
 | T-21 | Compromiso de la cuenta de servicio de Firebase | E | Igual que T-20; clave en Base64 dentro de un secreto | **Medio** |
-| T-22 | Un usuario autenticado usa Firestore como almacenamiento | D | Reglas: solo `users/{uid}/userData/watchlist`, `items` ≤ 500, sin campos extra; 19 pruebas con emulador (SEC-14) | Bajo una vez **publicadas** las reglas en el proyecto de Firebase (paso pendiente) |
+| T-22 | Un usuario autenticado usa Firestore como almacenamiento | D | Reglas: solo `users/{uid}/userData/watchlist`, `items` ≤ 500, sin campos extra; 19 pruebas con emulador (SEC-14) | Bajo. Reglas publicadas y verificadas el 2026-09-30 |
 | T-23 | Pérdida o corrupción de datos | D, T | El catálogo se reconstruye con los scripts de ingesta | **Medio:** chat, perfiles y vistas no son reproducibles y no hay copias de seguridad propias (ver RUNBOOK, sección de copias) |
 
 ### 5.6 Cadena de suministro, CI e imagen
@@ -196,7 +196,7 @@ informe de auditoría.
 | Aviso de privacidad y cookies (SEC-15) | Pendiente | Cumplimiento, no código; necesario antes de un público real |
 | CSP del cliente de escritorio (SEC-16) | Pendiente | No se pudo verificar en Tauri desde el entorno de trabajo |
 | Controles de Firebase Auth (SEC-09) | Aplicado y verificado el 2026-09-30 | Comprobado con llamadas directas a la API de Identity Toolkit |
-| Reglas de Firestore nuevas (SEC-14) | **Pendiente de publicar** | El archivo del repositorio no se despliega solo |
+| Reglas de Firestore nuevas (SEC-14) | Publicadas y verificadas el 2026-09-30 | Antes el proyecto tenía el «modo de prueba» (todo abierto hasta el 2026-10-17). El archivo del repositorio no se despliega solo |
 | `/api/ai/search` sin autenticación | Aceptado mientras la clave no esté en producción | Exigir sesión reduciría el abuso si se activa |
 | Fallo abierto del rate limit si Redis cae | Aceptado | Se prioriza la disponibilidad; queda un aviso en logs y el límite en memoria por instancia |
 | Sin API de borrado ni bloqueo en moderación | Aceptado | Se resuelve a mano; ver RUNBOOK |
