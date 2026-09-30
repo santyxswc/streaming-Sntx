@@ -1,4 +1,5 @@
 import 'server-only';
+import { externalApiSignal } from "@/server/integrations/timeout";
 /**
  * Cliente para OMDb API (Open Movie Database).
  * @see https://www.omdbapi.com/
@@ -29,7 +30,7 @@ async function omdbFetch(params = {}) {
     url.searchParams.set(k, v);
   }
 
-  const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
+  const res = await fetch(url.toString(), { next: { revalidate: 3600 }, signal: externalApiSignal() });
   if (!res.ok) return null;
   const data = await res.json();
   if (data.Response === "False") return null;

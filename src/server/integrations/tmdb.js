@@ -1,5 +1,6 @@
 import 'server-only';
 import { logger } from '@/server/observability/logger';
+import { externalApiSignal } from '@/server/integrations/timeout';
 /**
  * Cliente para TMDB API (The Movie Database).
  * @see https://developer.themoviedb.org/docs
@@ -50,6 +51,7 @@ async function tmdbFetch(path, params = {}) {
         ? { Authorization: `Bearer ${key}`, accept: "application/json" }
         : { accept: "application/json" },
       next: { revalidate: 3600 },
+      signal: externalApiSignal(),
     });
   } catch (err) {
     logger.error('tmdb.fetch_failed', { path, err });
