@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+import { mediaTypeFromPath } from "@/lib/mediaRoute";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Play, Star, X, Plus, Check, Volume2, VolumeX, ChevronDown, ChevronUp, Maximize2, Minimize2 } from "lucide-react";
@@ -38,7 +39,8 @@ function youtubeEmbedUrl(id: string, params: Record<string, string | number> = {
 }
 
 export default function DetailPage() {
-  const { type, slug } = useParams<{ type: string; slug: string }>();
+  const { slug } = useParams<{ slug: string }>();
+  const mediaType = mediaTypeFromPath(useLocation().pathname);
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const user = useAuthStore((s) => s.user);
@@ -88,7 +90,10 @@ export default function DetailPage() {
   }, [heroTrailer, showTheater]);
 
   const loadDetail = async () => {
-    if (!type || !slug) return;
+    if (!mediaType || !slug) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setItem(null);
     setTrailers([]);
@@ -97,7 +102,6 @@ export default function DetailPage() {
     setHeroTrailerOn(false);
     setEpisodes([]);
     try {
-      const mediaType = type === "peliculas" ? "movie" : "series";
       const data = await fetchDetail(mediaType, slug);
       setItem(data);
       if (data.type === "series" && data.numericId) {
@@ -112,7 +116,7 @@ export default function DetailPage() {
 
   useEffect(() => {
     loadDetail();
-  }, [type, slug]);
+  }, [mediaType, slug]);
 
   const loadEpisodes = async (showId: string, season: string) => {
     try {
