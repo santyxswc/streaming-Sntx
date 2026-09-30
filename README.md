@@ -227,6 +227,7 @@ flowchart LR
 - **Auditoría y modelo de amenazas:** [`docs/security-audit.md`](docs/security-audit.md) (hallazgos SEC-00 a SEC-18, con su estado) y [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 - **Operación:** [`docs/RUNBOOK.md`](docs/RUNBOOK.md) con la verificación tras cada despliegue y los planes de respuesta.
 - **Cadena de suministro:** acciones de GitHub fijadas por SHA, herramientas del CI fijadas por digest, Dependabot (npm, cargo, acciones y Docker), CodeQL y gitleaks.
+- **Imagen publicada y verificable:** GHCR con SBOM, procedencia SLSA y firma cosign sin claves, versiones semánticas con CHANGELOG automático. Ver [`docs/SUPPLY_CHAIN.md`](docs/SUPPLY_CHAIN.md).
 - **Contenedor:** imagen endurecida (usuario no root, sistema de archivos de solo lectura, sin npm en tiempo de ejecución). Ver [`docs/DOCKER.md`](docs/DOCKER.md).
 - **Comprobación de protecciones del repositorio:** `scripts/check-repo-posture.sh` consulta la API de GitHub (solo lectura) y falla si falta alguna.
 - **Calidad en cada commit y en el CI:** hook de pre-commit con gitleaks, lint y pruebas; cobertura con umbral; e2e con Playwright que también falla ante violaciones de la CSP; análisis dinámico semanal con OWASP ZAP ([`dast.yml`](.github/workflows/dast.yml), solo informe).

@@ -16,6 +16,7 @@
 |---|---|
 | [RUNBOOK.md](RUNBOOK.md) | Verificación tras un despliegue, rollback y respuesta a incidentes. |
 | [DOCKER.md](DOCKER.md) | Imagen endurecida: construcción, ejecución y análisis. |
+| [SUPPLY_CHAIN.md](SUPPLY_CHAIN.md) | Publicación de la imagen en GHCR con SBOM, procedencia y firma, y cómo verificarla. Versiones y CHANGELOG. |
 | [CATALOG_NEON.md](CATALOG_NEON.md) | Catálogo en Neon (PostgreSQL) y su migración desde Firebase. |
 
 ## Scripts relacionados
