@@ -1,6 +1,9 @@
 {
   "name": "streaming-sntx-desktop",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -25,9 +28,9 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^4.6.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.1",
     "@tauri-apps/cli": "^2",
     "tailwindcss": "^4",
     "@tailwindcss/postcss": "^4",
