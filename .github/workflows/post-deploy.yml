@@ -1,0 +1,58 @@
+name: Verificación tras despliegue
+
+# Cada vez que Vercel termina un despliegue a PRODUCCIÓN ejecuta la checklist automática
+# (scripts/verify-deploy.sh): disponibilidad, cabeceras de seguridad, rutas y CORS. Si algo falla,
+# abre una incidencia con la etiqueta `deploy` que remite al rollback de docs/DELIVERY.md.
+# Los despliegues de Preview se ignoran.
+
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: post-deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verificar producción
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ github.event.deployment.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.deployment.sha }}
+      - name: Checklist
+        id: verify
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          bash scripts/verify-deploy.sh https://streaming-sntx.vercel.app | tee result.txt
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "### Verificación del despliegue \`${SHA::7}\`"
+            echo
+            echo '```'
+            cat result.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Abrir incidencia si falla
+        if: steps.verify.outcome == 'failure'
+        run: |
+          gh label create deploy --color D93F0B --description "Un despliegue no pasó la verificación" 2>/dev/null || true
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          BODY=$(printf 'El despliegue `%s` a producción no pasó la checklist.\n\n```\n%s\n```\n\nEjecución: %s\n\nSi el fallo afecta a los usuarios, revierte con el procedimiento de `docs/DELIVERY.md` (rollback).\n' "${SHA::7}" "$(cat result.txt)" "$RUN")
+          gh issue create --label deploy --title "Despliegue ${SHA::7} no pasó la verificación" --body "$BODY"
+      - name: Marcar la ejecución como fallida
+        if: steps.verify.outcome == 'failure'
+        run: exit 1
