@@ -15,6 +15,7 @@
 | Documento | Para qué sirve |
 |---|---|
 | [RUNBOOK.md](RUNBOOK.md) | Verificación tras un despliegue, rollback y respuesta a incidentes. |
+| [DELIVERY.md](DELIVERY.md) | Flujo de entrega, checklist de promoción, rollback y decisiones (Vercel, protección de `main`). |
 | [DOCKER.md](DOCKER.md) | Imagen endurecida: construcción, ejecución y análisis. |
 | [SUPPLY_CHAIN.md](SUPPLY_CHAIN.md) | Publicación de la imagen en GHCR con SBOM, procedencia y firma, y cómo verificarla. Versiones y CHANGELOG. |
 | [CATALOG_NEON.md](CATALOG_NEON.md) | Catálogo en Neon (PostgreSQL) y su migración desde Firebase. |
@@ -27,3 +28,4 @@
 | `scripts/zap-summary.mjs` | Resume el informe JSON de ZAP (workflow `dast.yml`) para el resumen del job. |
 | `scripts/uptime-check.sh` | Comprueba `/api/health`, `/api/health/db` y la home de producción (solo GET). Lo ejecuta el workflow `Disponibilidad` cada 15 min. |
 | `scripts/error-budget.sh` | Disponibilidad de los últimos 30 días frente al objetivo y presupuesto de errores restante. |
+| `scripts/verify-deploy.sh` | Checklist automática tras un despliegue (11 comprobaciones de solo lectura). La ejecuta `post-deploy.yml`. |

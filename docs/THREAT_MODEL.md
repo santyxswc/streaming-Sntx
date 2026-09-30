@@ -189,13 +189,13 @@ informe de auditoría.
 | Scraping masivo del catálogo | Muchas peticiones de un mismo origen a `/api/media` | Los datos son públicos; el rate limit acota el ritmo; reglas del Vercel Firewall si molesta |
 | Alguien prueba contraseñas contra el login | Errores `too-many-requests` en Firebase | Activar los controles de SEC-09; revisar Authentication en la consola |
 
-## 7. Riesgos aceptados y pendientes
+## 7. Riesgos aceptados y estado de los controles
 
 | Riesgo | Estado | Por qué |
 |---|---|---|
 | `'unsafe-inline'` en `script-src` (SEC-11) | Aceptado | Quitarlo exige nonces por petición y renderizado dinámico: cambio de arquitectura |
 | Aviso de privacidad y cookies (SEC-15) | Implementado el 2026-09-30 | Falta definir `NEXT_PUBLIC_PRIVACY_CONTACT` en Vercel y revisar el texto según la jurisdicción |
-| CSP del cliente de escritorio (SEC-16) | Aplicada y verificada el 2026-09-30 | Con la política exacta en Chromium y en la app compilada; el webview real (WebKitGTK) no permite leer su consola desde fuera |
+| CSP del cliente de escritorio (SEC-16) | Aplicada y verificada el 2026-09-30 | Con la política exacta en Chromium y en la app compilada; en la app compilada real se cargan la API, las carátulas y los tráilers; el webview (WebKitGTK) no permite leer su consola desde fuera |
 | Controles de Firebase Auth (SEC-09) | Aplicado y verificado el 2026-09-30 | Comprobado con llamadas directas a la API de Identity Toolkit |
 | Reglas de Firestore nuevas (SEC-14) | Publicadas y verificadas el 2026-09-30 | Antes el proyecto tenía el «modo de prueba» (todo abierto hasta el 2026-10-17). El archivo del repositorio no se despliega solo |
 | `/api/ai/search` sin autenticación | Aceptado mientras la clave no esté en producción | Exigir sesión reduciría el abuso si se activa |

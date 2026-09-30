@@ -72,6 +72,9 @@ Rendimiento real de los usuarios (Core Web Vitals): Vercel → proyecto → **Sp
 
 ## 4. Verificación tras un despliegue o una recuperación
 
+Los puntos 1, 5 y 6 y las cabeceras de seguridad se comprueban solos con `scripts/verify-deploy.sh` (lo ejecuta `post-deploy.yml`
+tras cada despliegue a producción; ver [DELIVERY.md](DELIVERY.md)). Los demás siguen siendo manuales:
+
 1. `/api/health` y `/api/health/db` responden bien (sección 3).
 2. La portada carga filas con pósters y un tráiler se reproduce.
 3. Iniciar sesión funciona, y «Mi lista» muestra los favoritos.
