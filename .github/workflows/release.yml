@@ -1,0 +1,69 @@
+name: Release
+
+# Se ejecuta cuando el CI de `main` termina en verde, así que solo se versiona y publica lo que ya pasó
+# las pruebas. release-please lee los commits convencionales y mantiene un PR de release con la
+# versión siguiente y el CHANGELOG.md; al fusionarlo crea la etiqueta vX.Y.Z y la release de GitHub.
+# Cada CI verde publica además la imagen `edge` (desarrollo); cada release, la imagen versionada.
+#
+# Requisito (una vez): Settings -> Actions -> General -> Workflow permissions ->
+# "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Versionado y CHANGELOG
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write        # crear la etiqueta y la release
+      pull-requests: write   # abrir y actualizar el PR de release
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      version: ${{ steps.rp.outputs.version }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+      sha: ${{ steps.rp.outputs.sha }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish-edge:
+    name: Imagen de desarrollo (edge)
+    needs: release-please
+    if: needs.release-please.outputs.release_created != 'true'
+    uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+  publish-release:
+    name: Imagen de la release
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    with:
+      ref: ${{ needs.release-please.outputs.tag_name }}
+      version: ${{ needs.release-please.outputs.version }}

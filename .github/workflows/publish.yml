@@ -1,0 +1,134 @@
+name: Publicar imagen
+
+# Construye la imagen Docker y la publica en GHCR con:
+#   - SBOM (SPDX, generado por BuildKit) y procedencia SLSA (mode=max) como atestaciones de la imagen,
+#   - firma cosign SIN CLAVES (identidad OIDC de este workflow, registrada en Rekor),
+#   - SBOM CycloneDX (syft) adjunto como atestación firmada.
+# Es reutilizable: lo llama release.yml tras un CI en verde. Cómo verificar el resultado:
+# docs/SUPPLY_CHAIN.md.
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Commit o etiqueta a construir"
+        type: string
+        required: true
+      version:
+        description: "Versión semántica sin 'v' (vacío = imagen de desarrollo `edge`)"
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Commit o etiqueta a construir (por defecto, main)"
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ inputs.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Construir, firmar y publicar
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # adjuntar los SBOM a la release (solo si hay versión)
+      packages: write   # publicar en GHCR
+      id-token: write   # firma sin claves (OIDC)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Nombre de la imagen (GHCR exige minúsculas)
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Etiquetas y metadatos OCI
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=edge,enable=${{ inputs.version == '' }}
+            type=sha,prefix=sha-,enable=${{ inputs.version == '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=latest,enable=${{ inputs.version != '' }}
+
+      - name: Construir y publicar
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: SBOM CycloneDX con syft
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: true
+          artifact-name: sbom-imagen.cdx.json
+          upload-release-assets: false
+
+      - name: Firmar la imagen y atestar el SBOM (sin claves)
+        env:
+          REF: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+        run: |
+          cosign sign --yes "$REF"
+          cosign attest --yes --type cyclonedx --predicate sbom.cdx.json "$REF"
+
+      - name: Verificar lo publicado (la identidad debe ser este repositorio)
+        env:
+          REF: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          IDENTITY: ^https://github\.com/${{ github.repository }}/\.github/workflows/.+@.+$
+        run: |
+          cosign verify "$REF" \
+            --certificate-identity-regexp "$IDENTITY" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null
+          cosign verify-attestation "$REF" --type cyclonedx \
+            --certificate-identity-regexp "$IDENTITY" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com >/dev/null
+          {
+            echo "### Imagen publicada"
+            echo
+            echo "- Imagen: \`$REF\`"
+            echo "- Etiquetas: \`$(echo '${{ steps.meta.outputs.tags }}' | tr '\n' ' ')\`"
+            echo "- Firma, procedencia y SBOM verificados contra la identidad de este repositorio."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: SBOM de dependencias npm
+        if: inputs.version != ''
+        run: npm sbom --sbom-format cyclonedx --omit dev > sbom-npm.cdx.json
+
+      - name: Adjuntar los SBOM a la release
+        if: inputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp sbom.cdx.json sbom-imagen.cdx.json
+          gh release upload "v${{ inputs.version }}" sbom-imagen.cdx.json sbom-npm.cdx.json --clobber
