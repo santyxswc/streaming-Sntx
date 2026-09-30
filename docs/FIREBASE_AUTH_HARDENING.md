@@ -35,10 +35,13 @@ mensaje «Correo o contraseña incorrectos».
 
 ## 3. Dominios autorizados
 
-**Authentication → Settings → Authorized domains**
+**Authentication → Configuración → Dominios autorizados**
 
-Deja solo los que uses de verdad: `localhost` y `streaming-sntx.vercel.app`. Elimina
-cualquier otro que no reconozcas.
+Esta lista solo afecta a las redirecciones de OAuth (Google, teléfono, enlaces por correo).
+La app solo usa correo y contraseña, así que no depende de ella. Deja los predeterminados
+del proyecto (`localhost`, `<proyecto>.firebaseapp.com`, `<proyecto>.web.app`) y elimina
+cualquier otro que no reconozcas. Si algún día se activa OAuth, añade entonces el dominio
+de producción (`streaming-sntx.vercel.app`).
 
 ## 4. Restringir la clave de API por servicio (opcional)
 
@@ -57,7 +60,18 @@ Se puede reconsiderar si el escritorio incorpora un proveedor de App Check propi
 
 ## Cómo comprobarlo
 
-1. Registro con contraseña `abc` desde la web: debe rechazarse con el mensaje de requisitos.
-2. Login con un correo inexistente y con un correo real con contraseña errónea: ambos deben
-   mostrar exactamente el mismo mensaje.
-3. Repite el paso 1 desde la app de escritorio.
+Los mensajes del formulario no prueban nada: el formulario valida en el navegador antes de
+llamar a Firebase. Hay que hablar con Firebase directamente, con la clave de API pública:
+
+```bash
+B=https://identitytoolkit.googleapis.com/v1/accounts
+# 1. Debe responder PASSWORD_DOES_NOT_MEET_REQUIREMENTS y no crear ninguna cuenta
+curl -s -X POST -H 'Content-Type: application/json' "$B:signUp?key=$KEY" \
+  -d '{"email":"prueba-debil@example.com","password":"abc","returnSecureToken":false}'
+# 2. Correo inexistente y correo real con contraseña errónea: ambos INVALID_LOGIN_CREDENTIALS
+curl -s -X POST -H 'Content-Type: application/json' "$B:signInWithPassword?key=$KEY" \
+  -d '{"email":"no-existe@example.com","password":"Abcdefg1","returnSecureToken":false}'
+```
+
+Si el paso 1 devuelve un `localId`, se creó una cuenta: la política no se aplica.
+Repite el registro débil desde la app de escritorio para confirmar el mensaje de requisitos.

@@ -129,8 +129,8 @@ informe de auditoría.
 
 | ID | Amenaza | Cat. | Controles existentes | Residual |
 |---|---|---|---|---|
-| T-08 | Fuerza bruta o credential stuffing contra el login | S | Limitación propia de Firebase Auth; `/api/auth/limit` solo frena el formulario | **Medio:** política de contraseñas y protección de enumeración pendientes de aplicar en la consola (SEC-09) |
-| T-09 | Enumeración de correos registrados | I | Ninguno hasta activar la protección en Firebase | **Medio** hasta aplicar SEC-09 |
+| T-08 | Fuerza bruta o credential stuffing contra el login | S | Limitación propia de Firebase Auth; `/api/auth/limit` solo frena el formulario | Bajo. Política de contraseñas en modo *Exigir* activa en la consola y verificada contra Firebase (SEC-09); sigue sin haber límite propio para quien llama directo a Firebase |
+| T-09 | Enumeración de correos registrados | I | Protección contra enumeración de correos activa en Firebase (SEC-09); login y registro devuelven `INVALID_LOGIN_CREDENTIALS` | Bajo |
 | T-10 | Robo o reutilización de un token de sesión | S | Tokens de ~1 h; `checkRevoked` en envío de mensajes, moderación y `auth/admin` (SEC-07) | Bajo. Lecturas y edición de perfil no comprueban revocación |
 | T-11 | Escalada a moderador | E | Lista blanca `CHAT_ADMIN_UIDS` validada en servidor; secreto comparado en tiempo constante; **hoy ninguna de las dos variables está configurada en producción**, así que la superficie está cerrada | Bajo |
 | T-12 | Uso indebido de la clave web de Firebase (es pública) | S | Es pública por diseño; el control real son las reglas de Firestore y la configuración de Auth; opcionalmente restringir la clave por API | Bajo |
@@ -195,7 +195,7 @@ informe de auditoría.
 | `'unsafe-inline'` en `script-src` (SEC-11) | Aceptado | Quitarlo exige nonces por petición y renderizado dinámico: cambio de arquitectura |
 | Aviso de privacidad y cookies (SEC-15) | Pendiente | Cumplimiento, no código; necesario antes de un público real |
 | CSP del cliente de escritorio (SEC-16) | Pendiente | No se pudo verificar en Tauri desde el entorno de trabajo |
-| Controles de Firebase Auth (SEC-09) | **Pendiente de aplicar en la consola** | Ajustes manuales del mantenedor |
+| Controles de Firebase Auth (SEC-09) | Aplicado y verificado el 2026-09-30 | Comprobado con llamadas directas a la API de Identity Toolkit |
 | Reglas de Firestore nuevas (SEC-14) | **Pendiente de publicar** | El archivo del repositorio no se despliega solo |
 | `/api/ai/search` sin autenticación | Aceptado mientras la clave no esté en producción | Exigir sesión reduciría el abuso si se activa |
 | Fallo abierto del rate limit si Redis cae | Aceptado | Se prioriza la disponibilidad; queda un aviso en logs y el límite en memoria por instancia |

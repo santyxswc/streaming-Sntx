@@ -10,7 +10,7 @@
 | Severidad | Cantidad |
 |---|---|
 | Alta | 0 |
-| Media | 1 |
+| Media | 0 |
 | Baja | 3 |
 
 Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10), espacio de usuario sin límites en Firestore (SEC-14), protecciones del repositorio (SEC-17) y las 9 alertas de CodeQL (SEC-18).
@@ -34,15 +34,13 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-17 | `main` sin protección y sin secret scanning, push protection ni Dependabot alerts (verificado con la API de GitHub el 2026-09-30) | Activados y verificados con la API: ruleset `Proteger Main` activo sobre la rama por defecto (bloquea borrado y *force push*), Dependabot alerts y security updates, secret scanning, push protection y reporte privado de vulnerabilidades (el canal que promete `SECURITY.md` no existía hasta ahora). No se exige PR ni CI en verde para fusionar: es decisión de flujo de trabajo. Opcionales sin activar: *non-provider patterns* y *validity checks*. |
 | SEC-18 | 9 alertas de CodeQL en la primera ejecución del análisis (4 *high*, 5 *medium*): inyección en logs y cadena de formato con texto del usuario (`multi-search`, `ingest/tmdb`), `stripHtml` que deja etiquetas si se anidan, regex sin ancla `tvmaze\.com`, y una lectura de archivo enviada por HTTP | `src/lib/text.mjs` con `sanitizeForLog` (sin saltos de línea ni caracteres de control, longitud acotada), `stripHtml` que repite la pasada hasta estabilizarse y `isTvmazeUrl` con el dominio anclado; los logs usan una cadena de formato constante con los valores como argumentos. De paso, `ingest/tmdb` ahora valida `page` y `maxPages` como enteros positivos (antes llegaban sin comprobar el tipo). 33 tests nuevos. La alerta `js/file-access-to-http` de `scripts/ingest-tvmaze.mjs` es un falso positivo (el script lee su archivo de progreso local y consulta una URL fija): se descarta en GitHub con justificación en lugar de suprimirla en el código. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
+| SEC-09 | `/api/auth/limit` da falsa sensación de protección: quien llama directo a Firebase Auth se salta el límite y las reglas de contraseña del formulario | Aplicado en la consola de Firebase el 2026-09-30: política de contraseñas en modo *Exigir* (8 caracteres, mayúscula y número) y protección contra enumeración de correos. Dominios autorizados revisados: solo los predeterminados del proyecto. Verificado llamando a la API de Identity Toolkit sin pasar por el formulario: el registro con `abc` se rechaza con `PASSWORD_DOES_NOT_MEET_REQUIREMENTS` y el login con correo inexistente y con contraseña errónea devuelve el mismo `INVALID_LOGIN_CREDENTIALS`. No se usa App Check obligatorio porque la app de escritorio no puede obtener tokens de reCAPTCHA desde `tauri://localhost`. Pasos en [FIREBASE_AUTH_HARDENING.md](FIREBASE_AUTH_HARDENING.md). |
 
 ## Hallazgos abiertos
 
 ### Media
 
-**SEC-09 — `/api/auth/limit` da falsa sensación de protección**
-`src/features/auth/components/AuthModal.js:54` la llama desde el cliente antes de `signInWithEmailAndPassword`. Un atacante llama directamente a Firebase Auth y se salta ese control; las reglas de contraseña del formulario (8 caracteres, mayúscula y número) tampoco se aplican fuera del navegador.
-*Decisión:* no usar App Check obligatorio, porque la app de escritorio usa Firebase Auth y Firestore directamente y no puede obtener tokens de reCAPTCHA desde `tauri://localhost`.
-*Mitigación acordada (pendiente de aplicar en la consola):* política de contraseñas en modo *Require*, protección contra enumeración de correos y revisión de dominios autorizados. Pasos en [FIREBASE_AUTH_HARDENING.md](FIREBASE_AUTH_HARDENING.md). El código ya muestra un mensaje claro para `auth/password-does-not-meet-requirements` y documenta que `/api/auth/limit` es de mejor esfuerzo.
+Ninguno abierto.
 
 ### Baja
 
