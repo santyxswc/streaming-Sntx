@@ -175,9 +175,10 @@ informe de auditoría.
 
 | ID | Amenaza | Cat. | Controles existentes | Residual |
 |---|---|---|---|---|
-| T-29 | XSS en el webview de Tauri | T, E | React escapa el contenido; alcance limitado: solo se expone el comando de ejemplo `greet` y los permisos `core:default` y `opener:default` (sin sistema de archivos ni shell) | **Bajo, pero sin defensa en profundidad:** `csp` es `null` (SEC-16) |
+| T-29 | XSS en el webview de Tauri | T, E | React escapa el contenido; alcance limitado: solo se expone el comando de ejemplo `greet` y los permisos `core:default` y `opener:default` (sin sistema de archivos ni shell) | Bajo. CSP de Tauri definida y verificada (SEC-16): `script-src 'self'`, conexiones solo a la API y a Firebase |
 | T-30 | Caída o cambio de un tercero (TMDB, TVmaze, YouTube, DeepSeek, Upstash) | D | Caché TTL; catálogo local en Neon; la IA responde «no disponible»; el rate limit degrada a memoria si Redis falla | Bajo |
-| T-31 | Datos personales compartidos con terceros | I | Reproductor `youtube-nocookie.com`. Firebase Analytics está activo y no hay control de consentimiento | **Medio (cumplimiento):** falta aviso de privacidad y de cookies si se abre a público real (SEC-15) |
+| T-31 | Datos personales compartidos con terceros | I | Reproductor `youtube-nocookie.com`. Firebase Analytics solo se carga si la persona lo acepta (banner con «Aceptar» y «Rechazar», reversible); página `/privacidad` (SEC-15) | Bajo. El texto es informativo y debe revisarse según la jurisdicción |
+| T-32 | Abuso de la página puente `/embed/:id` (proxy abierto, clickjacking, inyección de parámetros o de ids) | T, I | Solo ids de 11 caracteres `[\w-]`, parámetros de una lista cerrada con valores 0/1 y `playlist` igual al id, HTML sin scripts ni datos reflejados, CSP `default-src 'none'` con `frame-src` solo a `youtube-nocookie.com`, `frame-ancestors` solo para Tauri, `nosniff`, `noindex`; 404 en cualquier otro caso; pruebas unitarias y e2e (SEC-20) | Bajo: solo reproduce vídeos públicos de YouTube |
 
 ## 6. Casos de abuso frecuentes
 
@@ -193,8 +194,8 @@ informe de auditoría.
 | Riesgo | Estado | Por qué |
 |---|---|---|
 | `'unsafe-inline'` en `script-src` (SEC-11) | Aceptado | Quitarlo exige nonces por petición y renderizado dinámico: cambio de arquitectura |
-| Aviso de privacidad y cookies (SEC-15) | Pendiente | Cumplimiento, no código; necesario antes de un público real |
-| CSP del cliente de escritorio (SEC-16) | Pendiente | No se pudo verificar en Tauri desde el entorno de trabajo |
+| Aviso de privacidad y cookies (SEC-15) | Implementado el 2026-09-30 | Falta definir `NEXT_PUBLIC_PRIVACY_CONTACT` en Vercel y revisar el texto según la jurisdicción |
+| CSP del cliente de escritorio (SEC-16) | Aplicada y verificada el 2026-09-30 | Con la política exacta en Chromium y en la app compilada; el webview real (WebKitGTK) no permite leer su consola desde fuera |
 | Controles de Firebase Auth (SEC-09) | Aplicado y verificado el 2026-09-30 | Comprobado con llamadas directas a la API de Identity Toolkit |
 | Reglas de Firestore nuevas (SEC-14) | Publicadas y verificadas el 2026-09-30 | Antes el proyecto tenía el «modo de prueba» (todo abierto hasta el 2026-10-17). El archivo del repositorio no se despliega solo |
 | `/api/ai/search` sin autenticación | Aceptado mientras la clave no esté en producción | Exigir sesión reduciría el abuso si se activa |

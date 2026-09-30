@@ -11,7 +11,7 @@
 |---|---|
 | Alta | 0 |
 | Media | 0 |
-| Baja | 4 |
+| Baja | 2 |
 
 Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cabeceras/CSP/CORS (SEC-01), pipeline de seguridad en CI (SEC-02), protección de la ruta de ingesta (SEC-05), fugas de configuración en errores de autenticación (SEC-06), limitador de tasa compartido (SEC-03), abuso de coste del buscador con IA (SEC-04), revocación de tokens (SEC-07), sondeo de la base de datos (SEC-08), errores de tipos ocultos en el build (SEC-12), proxy de imágenes abierto latente (SEC-13) avisos pendientes de `firebase-admin` (SEC-10), espacio de usuario sin límites en Firestore (SEC-14), protecciones del repositorio (SEC-17) y las 9 alertas de CodeQL (SEC-18).
 
@@ -35,6 +35,9 @@ Ya corregido durante la auditoría: dependencias críticas y altas (SEC-00), cab
 | SEC-18 | 9 alertas de CodeQL en la primera ejecución del análisis (4 *high*, 5 *medium*): inyección en logs y cadena de formato con texto del usuario (`multi-search`, `ingest/tmdb`), `stripHtml` que deja etiquetas si se anidan, regex sin ancla `tvmaze\.com`, y una lectura de archivo enviada por HTTP | `src/lib/text.mjs` con `sanitizeForLog` (sin saltos de línea ni caracteres de control, longitud acotada), `stripHtml` que repite la pasada hasta estabilizarse y `isTvmazeUrl` con el dominio anclado; los logs usan una cadena de formato constante con los valores como argumentos. De paso, `ingest/tmdb` ahora valida `page` y `maxPages` como enteros positivos (antes llegaban sin comprobar el tipo). 33 tests nuevos. La alerta `js/file-access-to-http` de `scripts/ingest-tvmaze.mjs` es un falso positivo (el script lee su archivo de progreso local y consulta una URL fija): se descarta en GitHub con justificación en lugar de suprimirla en el código. |
 | SEC-06 | Los errores de autenticación filtraban nombres de variables, ids de proyecto y rutas de docs | `formatVerifyAuthError` devuelve un mensaje genérico para errores de configuración; el detalle solo se registra en el servidor. |
 | SEC-09 | `/api/auth/limit` da falsa sensación de protección: quien llama directo a Firebase Auth se salta el límite y las reglas de contraseña del formulario | Aplicado en la consola de Firebase el 2026-09-30: política de contraseñas en modo *Exigir* (8 caracteres, mayúscula y número) y protección contra enumeración de correos. Dominios autorizados revisados: solo los predeterminados del proyecto. Verificado llamando a la API de Identity Toolkit sin pasar por el formulario: el registro con `abc` se rechaza con `PASSWORD_DOES_NOT_MEET_REQUIREMENTS` y el login con correo inexistente y con contraseña errónea devuelve el mismo `INVALID_LOGIN_CREDENTIALS`. No se usa App Check obligatorio porque la app de escritorio no puede obtener tokens de reCAPTCHA desde `tauri://localhost`. Pasos en [FIREBASE_AUTH_HARDENING.md](FIREBASE_AUTH_HARDENING.md). |
+| SEC-16 | El cliente de escritorio no definía una CSP (`csp: null`) | `app.security.csp` y `devCsp` en `tauri.conf.json`: `script-src 'self'` (sin `unsafe-inline`), `connect-src` solo a la API, Firestore, Auth e IPC de Tauri, `frame-src` solo a la API, `object-src 'none'`. Verificado con la política EXACTA del archivo en Chromium (home, ficha, login fallido contra Firebase: 0 violaciones; un script ajeno, una conexión ajena, un script inline y un iframe ajeno quedan bloqueados) y en la app compilada real (se cargan la API y las carátulas y se pueden añadir favoritos; el inicio de sesión se verificó solo en Chromium). Si se compila contra otra API (`VITE_API_URL`), hay que añadir su origen a `csp`. |
+| SEC-20 | Error 153 de YouTube en la app de escritorio compilada: bajo `tauri://localhost` el webview no envía `Referer` HTTP(S) y YouTube rechaza la incrustación (funcionaba con `tauri dev`, origen `http://localhost:1420`). Además, los favoritos se pintaban tarde porque se seleccionaba la función `isFavorite` (referencia estable) en lugar del estado | Página puente `GET /embed/:id` en la web (https): el escritorio incrusta la web y esta incrusta `youtube-nocookie.com`. Superficie nueva y acotada: solo ids de 11 caracteres, parámetros de una lista cerrada con valores 0/1, CSP `default-src 'none'` con `frame-src` solo a YouTube, y `frame-ancestors` solo para los orígenes de Tauri (sin `X-Frame-Options`; el resto de la web mantiene `DENY` y `frame-ancestors 'none'`, con prueba). Reproducido en Chromium (sin `Referer` → Error 153; vía la página puente → reproduce; origen no permitido → bloqueado). Favoritos: selector suscrito al estado (`selectIsFavorite`), de «no cambia» a 1 ms. |
+| SEC-15 | Firebase Analytics se inicializaba al cargar la página: se descargaba `gtag.js` de Google y se enviaban eventos sin consentimiento, y no había aviso de privacidad | Analytics solo arranca tras aceptarlo (`src/lib/consent.js`, `startAnalytics` en `firebase.js`): banner con «Aceptar» y «Rechazar», decisión guardada y reversible desde «Preferencias de cookies» en el pie, y retirada del consentimiento sin recargar. Página `/privacidad` con los datos que se guardan de verdad (cuenta, lista, chat, IP temporal, analítica), terceros, conservación y derechos. Medido en un navegador real con la configuración de Firebase: producción actual, 2 peticiones a Google antes de decidir; con el cambio, 0 antes de decidir y 0 tras rechazar. Es un texto informativo del proyecto, no asesoría legal: debe revisarse según la jurisdicción de quien lo opere, y conviene definir `NEXT_PUBLIC_PRIVACY_CONTACT` con un correo de contacto. |
 
 ## Hallazgos abiertos
 
@@ -53,11 +56,6 @@ Ninguno abierto.
 
 **SEC-11 — Sin CSP estricta con nonces.** `script-src` mantiene `'unsafe-inline'`. Quitarlo exige nonces por petición y render dinámico. Riesgo aceptado por ahora.
 
-**SEC-16 — El cliente de escritorio no define una CSP.** `desktop/src-tauri/tauri.conf.json` tiene `"csp": null`. El alcance de un XSS en el webview es limitado: solo se expone el comando de ejemplo `greet`, y los permisos son `core:default` y `opener:default` (sin sistema de archivos ni shell), pero falta la defensa en profundidad que sí tiene la web. Revisado solo en configuración y permisos; el resto de `src-tauri` no se auditó.
-*Recomendación:* definir una CSP equivalente a la de la web (`default-src 'self'`; `connect-src` para la URL de la API y Firebase; `frame-src` para `youtube-nocookie.com`; `img-src https: data:`) y **probarla ejecutando la app** antes de publicarla.
-
-**SEC-15 — Privacidad.** Firebase Analytics envía datos de uso a Google. Falta aviso de privacidad/cookies si el sitio se abre a público real.
-
 ## Controles que ya funcionan bien
 
 - Todas las consultas SQL usan plantillas etiquetadas de `postgres`; no hay `sql.unsafe` ni concatenación.
@@ -74,4 +72,4 @@ Ninguno abierto.
 2. ~~SEC-04~~ y ~~SEC-03~~ (hecho en código; falta provisionar Redis).
 3. ~~SEC-07 y SEC-08~~ (hecho).
 4. ~~SEC-10~~ (hecho).
-5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho y publicado). Resto de bajas: SEC-11, SEC-15 y SEC-16.
+5. ~~SEC-12, SEC-13 y SEC-14~~ (hecho y publicado). Resto de bajas: SEC-11 y SEC-19 (ambos aceptados).
