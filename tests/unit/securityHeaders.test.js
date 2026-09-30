@@ -24,8 +24,11 @@ describe('buildCsp', () => {
     },
   );
 
-  it('no depende de Google Analytics ni Tag Manager', () => {
-    expect(buildCsp({ isProd: true })).not.toMatch(/googletagmanager|google-analytics|doubleclick/);
+  it('permite los orígenes que Firebase Analytics necesita (gtag.js y envío de eventos)', () => {
+    const csp = buildCsp({ isProd: true });
+    const directive = (name) => csp.split('; ').find((d) => d.startsWith(name));
+    expect(directive('script-src')).toContain('https://www.googletagmanager.com');
+    expect(directive('connect-src')).toContain('https://*.google-analytics.com');
   });
 
   it('solo permite embeber YouTube y Firebase Auth como frames', () => {

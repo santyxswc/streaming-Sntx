@@ -17,6 +17,9 @@ export function buildCsp({ isProd, https = false }) {
       'https://s.ytimg.com',
       'https://www.gstatic.com',
       'https://apis.google.com',
+      // Firebase Analytics (getAnalytics) inyecta gtag.js en ejecución.
+      'https://www.googletagmanager.com',
+      'https://www.google-analytics.com',
     ],
     'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     'img-src': ["'self'", 'data:', 'https:'],
@@ -35,6 +38,13 @@ export function buildCsp({ isProd, https = false }) {
       'https://*.firebaseio.com',
       'https://*.gstatic.com',
       'wss://*.firebaseio.com',
+      // Envío de eventos de Firebase Analytics / GA4.
+      'https://www.google-analytics.com',
+      'https://*.google-analytics.com',
+      'https://www.googletagmanager.com',
+      'https://*.googletagmanager.com',
+      'https://www.google.com',
+      'https://stats.g.doubleclick.net',
       ...(isProd ? [] : ['ws:', 'http://localhost:*']),
     ],
     'object-src': ["'none'"],
