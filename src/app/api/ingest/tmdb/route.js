@@ -4,6 +4,7 @@ import { saveMediaBatch, updateFilterMetadata } from '@/server/catalog/catalogRe
 import { getNeonSql } from '@/server/db/neonSql';
 import { rateLimit } from '@/server/http/rateLimit';
 import { safeEqual } from '@/server/shared/safeEqual';
+import { sanitizeForLog } from '@/lib/text.mjs';
 
 export const runtime = 'nodejs';
 
@@ -129,7 +130,7 @@ export async function POST(request) {
       totalPages = result.totalPages || 1;
 
       if (!result.items.length) {
-        console.log('[ingest-tmdb] Sin items en página %d (%s)', currentPage, mediaType);
+        console.log('[ingest-tmdb] Sin items en página %s (%s)', sanitizeForLog(currentPage), sanitizeForLog(mediaType));
         break;
       }
       totalRaw += result.items.length;
@@ -148,8 +149,9 @@ export async function POST(request) {
       totalDuplicates += duplicatesThisPage;
 
       console.log(
-        '[ingest-tmdb] %s página %d/%d: %d items (%d nuevos, %d ya existían)',
-        mediaType, currentPage, totalPages, result.items.length, newItems.length, duplicatesThisPage
+        '[ingest-tmdb] %s página %s/%s: %d items (%d nuevos, %d ya existían)',
+        sanitizeForLog(mediaType), sanitizeForLog(currentPage), sanitizeForLog(totalPages),
+        result.items.length, newItems.length, duplicatesThisPage
       );
 
       if (newItems.length) {
