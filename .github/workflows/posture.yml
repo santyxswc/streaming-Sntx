@@ -1,0 +1,41 @@
+name: Postura del repositorio
+
+# Detecta deriva: comprueba cada semana que las protecciones de GitHub siguen activas.
+# Leer los ajustes de seguridad y los rulesets exige permisos de administrador, que el
+# GITHUB_TOKEN de Actions no tiene. Crea un token de acceso personal de solo lectura
+# (fine-grained: Administration: read, Dependabot alerts: read, Code scanning alerts: read,
+# Secret scanning alerts: read, Actions: read, Metadata: read) y guárdalo como el secreto
+# POSTURE_TOKEN. Sin el secreto, el trabajo se salta con un aviso.
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  posture:
+    name: Comprobar protecciones
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      POSTURE_TOKEN: ${{ secrets.POSTURE_TOKEN }}
+    steps:
+      - name: Comprobar que existe el secreto
+        id: token
+        run: |
+          if [ -z "$POSTURE_TOKEN" ]; then
+            echo "::notice::Falta el secreto POSTURE_TOKEN; se omite la comprobación de postura."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.token.outputs.present == 'true'
+      - name: Ejecutar scripts/check-repo-posture.sh
+        if: steps.token.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.POSTURE_TOKEN }}
+        run: bash scripts/check-repo-posture.sh "$GITHUB_REPOSITORY"
