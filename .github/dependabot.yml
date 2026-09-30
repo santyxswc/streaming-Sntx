@@ -15,6 +15,9 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # vite y su plugin de React se exigen mutuamente: deben subir en el mismo PR.
+      vite:
+        patterns: ["vite", "@vitejs/*"]
       minor-and-patch:
         update-types: [minor, patch]
 
@@ -27,3 +30,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # init y analyze de CodeQL deben tener siempre la misma versión.
+      codeql:
+        patterns: ["github/codeql-action*"]
