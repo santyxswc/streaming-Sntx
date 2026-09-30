@@ -1,0 +1,60 @@
+name: Disponibilidad
+
+# Monitor externo de producción: cada 15 minutos hace GET a /api/health, /api/health/db y la
+# home (scripts/uptime-check.sh). Si falla, abre una incidencia con la etiqueta `uptime`
+# (y GitHub te avisa por correo); cuando se recupera, la cierra. No depende de los logs de
+# Vercel, que caducan en ~1 h en el plan Hobby.
+# Nota: GitHub pausa los workflows programados tras 60 días sin actividad en el repositorio.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  uptime:
+    name: Comprobar producción
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Comprobar
+        id: check
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          bash scripts/uptime-check.sh | tee result.txt
+      - name: Abrir o actualizar la incidencia
+        if: steps.check.outcome == 'failure'
+        run: |
+          gh label create uptime --color B60205 --description "Producción no disponible" 2>/dev/null || true
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          BODY=$(printf 'La comprobación de disponibilidad falló.\n\n```\n%s\n```\n\nEjecución: %s\n' "$(cat result.txt)" "$RUN")
+          N=$(gh issue list --label uptime --state open --json number --jq '.[0].number // empty')
+          if [ -z "$N" ]; then
+            gh issue create --label uptime --title "Producción no disponible" --body "$BODY"
+          else
+            gh issue comment "$N" --body "$BODY"
+          fi
+      - name: Cerrar la incidencia si ya se recuperó
+        if: steps.check.outcome == 'success'
+        run: |
+          N=$(gh issue list --label uptime --state open --json number --jq '.[0].number // empty')
+          if [ -n "$N" ]; then
+            gh issue comment "$N" --body "Recuperado: todas las comprobaciones pasan ($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+            gh issue close "$N"
+          fi
+      - name: Marcar la ejecución como fallida
+        if: steps.check.outcome == 'failure'
+        run: exit 1

@@ -53,10 +53,22 @@ curl -s -o /dev/null -w "%{http_code}\n" https://streaming-sntx.vercel.app/api/f
 `/api/health/db` guarda su resultado 30 s (5 s si falló), así que tras arreglar la base de datos puede
 tardar unos segundos en reflejarlo.
 
-**Logs:** Vercel → proyecto → **Logs**. El código solo escribe con `console.error` y `console.warn`,
-con el prefijo de la ruta (`[health/db]`, `[ai/search]`, `[rateLimit]`…). **En el plan Hobby la
-retención de logs es corta** (del orden de una hora; compruébalo en tu panel): copia el texto
-relevante al empezar el incidente o se perderá.
+**Logs:** Vercel → proyecto → **Logs**. El servidor escribe **una línea JSON por evento**
+(`src/server/observability/logger.js`): `{"ts","level","event",…}`, más `route` y `requestId` cuando
+el evento ocurre dentro de una petición. Se busca por nombre de evento (`event:health_db.connect_failed`)
+o por ruta, y el `requestId` es el `x-vercel-id` de la petición. Los textos se sanean y se redactan
+claves, tokens, cadenas de conexión y correos; no se registran datos personales ni el texto de las
+búsquedas. Filtra por nivel `error` o `warn` para ver solo lo que requiere atención.
+**En el plan Hobby la retención de logs es corta** (del orden de una hora; compruébalo en tu panel):
+copia el texto relevante al empezar el incidente o se perderá.
+
+**Monitor y alertas.** El workflow `Disponibilidad` (`.github/workflows/uptime.yml`) comprueba
+producción cada ~15 minutos desde GitHub y **abre una incidencia con la etiqueta `uptime`** si
+algo falla (GitHub te avisa por correo); la cierra cuando se recupera. No depende de los logs.
+`scripts/uptime-check.sh` hace lo mismo a mano. `scripts/error-budget.sh` calcula la disponibilidad
+de los últimos 30 días frente al objetivo de **99,5 %** (≈ 3,6 h de caída al mes) y cuánto
+presupuesto de errores queda. Si se agota, prioriza estabilidad sobre funcionalidades nuevas.
+Rendimiento real de los usuarios (Core Web Vitals): Vercel → proyecto → **Speed Insights**.
 
 ## 4. Verificación tras un despliegue o una recuperación
 
@@ -110,7 +122,7 @@ un `.env` subido por error.
 2. Comprueba el **estado del servicio de Neon** y los límites de tu plan (almacenamiento, horas de
    cómputo, conexiones).
 3. Si `DATABASE_URL` cambió (rotación) o falta, corrígela en Vercel y redespliega.
-4. Los logs mostrarán `[health/db]` con el detalle del error; el cliente nunca lo ve.
+4. Los logs mostrarán el evento `health_db.connect_failed` con el detalle del error; el cliente nunca lo ve.
 5. **Si se perdieron datos:** ver la sección 7 (copias de seguridad).
 
 ### Playbook 4 — Firebase Auth o Firestore degradado
@@ -120,7 +132,7 @@ disponible»; «Mi lista» no sincroniza.
 
 1. Revisa el **estado de los servicios de Firebase/Google Cloud** y la consola del proyecto.
 2. «Servicio de autenticación no disponible» es un error de **configuración del servidor**: el detalle
-   está en los logs (`verifyBearerUid`). Causas habituales: `FIREBASE_SERVICE_ACCOUNT_BASE64` ausente o
+   está en los logs (evento `auth.token_rejected`, con el código de error de Firebase en `code`). Causas habituales: `FIREBASE_SERVICE_ACCOUNT_BASE64` ausente o
    mal formada, o el proyecto de la cuenta de servicio no coincide con `NEXT_PUBLIC_FIREBASE_PROJECT_ID`.
    Guía: [FIREBASE_SERVICE_ACCOUNT.md](FIREBASE_SERVICE_ACCOUNT.md).
 3. Si «Mi lista» falla solo al guardar, revisa las reglas de Firestore publicadas (los clientes solo
@@ -128,7 +140,7 @@ disponible»; «Mi lista» no sincroniza.
 
 ### Playbook 5 — Almacén del rate limit caído (Upstash)
 
-**Síntomas:** en los logs aparece `[rateLimit] almacén compartido no disponible, usando memoria`.
+**Síntomas:** en los logs aparece el evento `ratelimit.store_unavailable` (nivel `warn`).
 
 - **Efecto:** el servicio sigue funcionando. Los límites pasan a contarse **por instancia** y se reinician
   en cada arranque en frío, es decir, protegen bastante menos.
@@ -242,7 +254,7 @@ Después de **cada** rotación: actualizar el valor en Vercel, **redesplegar** y
 | `TMDB_API_KEY` | Tu cuenta de TMDB → Ajustes → API | Sin ella los tráilers nuevos no se resuelven | Abrir un título sin tráiler guardado |
 | `DEEPSEEK_API_KEY` | Panel de DeepSeek → API keys (crea la nueva y borra la antigua) | La IA cae hasta redesplegar | Una búsqueda con IA |
 | `OMDB_API_KEY` | Nueva clave desde el sitio de OMDb | Fichas complementarias | Abrir un detalle |
-| `KV_REST_API_TOKEN` / `KV_REST_API_URL` | Panel de Upstash de la base. Al estar gestionadas por la integración de Vercel, comprueba después que la variable de Vercel coincide | Si no coinciden, el limitador degrada a memoria (playbook 5) | Logs sin `[rateLimit]` de aviso |
+| `KV_REST_API_TOKEN` / `KV_REST_API_URL` | Panel de Upstash de la base. Al estar gestionadas por la integración de Vercel, comprueba después que la variable de Vercel coincide | Si no coinciden, el limitador degrada a memoria (playbook 5) | Logs sin el evento `ratelimit.store_unavailable` |
 | `NEXT_PUBLIC_*` | **No son secretos** (van en el JavaScript del navegador) | — | — |
 | Tokens personales de GitHub (`gh`) | GitHub → Settings → Developer settings | Solo afecta a tu terminal | `gh auth status` |
 
