@@ -15,6 +15,7 @@
 | Documento | Para qué sirve |
 |---|---|
 | [RUNBOOK.md](RUNBOOK.md) | Verificación tras un despliegue, rollback y respuesta a incidentes. |
+| [ROADMAP.md](ROADMAP.md) | Mejoras pendientes con prioridad, motivo y criterio de «hecho»; mantenimiento recurrente y decisiones revisables. |
 | [DELIVERY.md](DELIVERY.md) | Flujo de entrega, checklist de promoción, rollback y decisiones (Vercel, protección de `main`). |
 | [DOCKER.md](DOCKER.md) | Imagen endurecida: construcción, ejecución y análisis. |
 | [SUPPLY_CHAIN.md](SUPPLY_CHAIN.md) | Publicación de la imagen en GHCR con SBOM, procedencia y firma, y cómo verificarla. Versiones y CHANGELOG. |

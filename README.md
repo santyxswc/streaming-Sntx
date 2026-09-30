@@ -268,6 +268,7 @@ flowchart LR
 
 - **Auditoría y modelo de amenazas:** [`docs/security-audit.md`](docs/security-audit.md) (hallazgos SEC-00 a SEC-18, con su estado) y [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 - **Operación:** [`docs/RUNBOOK.md`](docs/RUNBOOK.md) con la verificación tras cada despliegue y los planes de respuesta.
+- **Qué falta:** las mejoras pendientes, priorizadas y con su motivo, están en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 - **Entrega:** flujo PR → Preview → producción con verificación automática tras cada despliegue y rollback documentado en [`docs/DELIVERY.md`](docs/DELIVERY.md).
 - **Cadena de suministro:** acciones de GitHub fijadas por SHA, herramientas del CI fijadas por digest, Dependabot (npm, cargo, acciones y Docker), CodeQL y gitleaks.
 - **Imagen publicada y verificable:** GHCR con SBOM, procedencia SLSA y firma cosign sin claves, versiones semánticas con CHANGELOG automático. Ver [`docs/SUPPLY_CHAIN.md`](docs/SUPPLY_CHAIN.md).
